@@ -1,7 +1,13 @@
+import 'dart:convert';
 import 'dart:ffi';
 
 import 'package:flutter/material.dart';
 import 'package:location/location.dart';
+import 'package:mapbox_gl/mapbox_gl.dart';
+import 'package:mapbox_navigation/constants/departments.dart';
+import 'package:mapbox_navigation/helpers/directions_handler.dart';
+import 'package:mapbox_navigation/main.dart';
+import 'package:mapbox_navigation/screens/university_table.dart';
 
 import '../screens/home_management.dart';
 
@@ -36,10 +42,19 @@ class _SplashState extends State<Splash> {
       _permissionGanted == await _location.requestPermission();
     }
     // Get capture the current user location
+    LocationData _locationData = await _location.getLocation();
+    LatLng currentLatlng =
+        LatLng(_locationData.latitude!, _locationData.longitude!);
 
     // Store the user location in sharedPreferences
+    sharedPreferences.setDouble('latitude', _locationData.latitude!);
+    sharedPreferences.setDouble('longitude', _locationData.longitude!);
 
     // Get and store the directions API response in sharedPreferences
+    for (int i = 0; i < departments.length; i++) {
+      Map modifiedResponse = await getDirectionsAPIResponse(currentLatlng, i);
+      saveDirectionsAPIResponse(i, json.encode(modifiedResponse));
+    }
     Future.delayed(
         const Duration(seconds: 1),
         () => Navigator.pushAndRemoveUntil(

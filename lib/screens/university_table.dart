@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mapbox_navigation/constants/departments.dart';
+import 'package:mapbox_navigation/helpers/shared_prefs.dart';
 
 class departmentsTable extends StatefulWidget {
   const departmentsTable({Key? key}) : super(key: key);
@@ -79,14 +80,14 @@ class _departmentsTableState extends State<departmentsTable> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         CachedNetworkImage(
-                          height: 175,
+                          height: 200,
                           width: 140,
                           fit: BoxFit.cover,
                           imageUrl: departments[index]['image'],
                         ),
                         Expanded(
                           child: Container(
-                            height: 175,
+                            height: 200,
                             padding: const EdgeInsets.all(15),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,20 +100,14 @@ class _departmentsTableState extends State<departmentsTable> {
                                 ),
                                 Text(departments[index]['items']),
                                 const Spacer(),
-                                const Text('Waiting time: 2hrs'),
                                 Text(
-                                  'Closes at 10PM',
-                                  style:
-                                      TextStyle(color: Colors.redAccent[100]),
-                                ),
+                                    "Distance : ${getDistanceFromSharedPrefs(index)} m"),
                                 Row(
                                   children: [
                                     cardButtons(Icons.call, 'Call'),
                                     cardButtons(Icons.location_on, 'Map'),
-                                    const Spacer(),
-                                    const Text('2km'),
                                   ],
-                                )
+                                ),
                               ],
                             ),
                           ),

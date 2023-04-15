@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mapbox_gl/mapbox_gl.dart';
+import 'package:mapbox_navigation/helpers/shared_prefs.dart';
 
 class UniversityMap extends StatefulWidget {
   const UniversityMap({Key? key}) : super(key: key);
@@ -10,12 +12,15 @@ class UniversityMap extends StatefulWidget {
 
 class _UniversityMapState extends State<UniversityMap> {
   // Mapbox related
-
+  LatLng latlng = getLatLngFromSharedPrefs();
+  late CameraPosition _initialCameraPosition;
+  late MapboxMapController controller;
   // Carousel related
 
   @override
   void initState() {
     super.initState();
+    _initialCameraPosition = CameraPosition(target: latlng, zoom: 15);
 
     // Calculate the distance and time from data in SharedPreferences
 
@@ -34,7 +39,9 @@ class _UniversityMapState extends State<UniversityMap> {
     // Add new source and lineLayer
   }
 
-  _onMapCreated(MapboxMapController controller) async {}
+  _onMapCreated(MapboxMapController controller) async {
+    this.controller = controller;
+  }
 
   _onStyleLoadedCallback() async {}
 
@@ -44,10 +51,30 @@ class _UniversityMapState extends State<UniversityMap> {
       appBar: AppBar(
         title: const Text('University Map'),
       ),
-      body: const SafeArea(
-        child: Center(
-          child: Text('Let\'s build something awesome 💪🏻'),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.8,
+              child: MapboxMap(
+                initialCameraPosition: _initialCameraPosition,
+                accessToken: dotenv.env['MAPBOX_ACCESS_TOKEN'],
+                onMapCreated: _onMapCreated,
+                myLocationEnabled: true,
+                myLocationTrackingMode: MyLocationTrackingMode.TrackingGPS,
+                minMaxZoomPreference: const MinMaxZoomPreference(14, 30),
+              ),
+            ),
+          ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          controller.animateCamera(
+            CameraUpdate.newCameraPosition(_initialCameraPosition),
+          );
+        },
+        child: const Icon(Icons.my_location_outlined),
       ),
     );
   }
