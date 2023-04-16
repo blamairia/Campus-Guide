@@ -10,8 +10,8 @@ Widget carouselCard(int index, num distance, num duration) {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            backgroundImage: NetworkImage(departments[index]['image']),
+          const CircleAvatar(
+            backgroundImage: AssetImage('assets/image/bikoura.jpg'),
             radius: 20,
           ),
           const SizedBox(width: 10),

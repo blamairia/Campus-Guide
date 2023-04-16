@@ -26,9 +26,10 @@ class _HomeManagementState extends State<HomeManagement> {
         currentIndex: _index,
         items: const [
           BottomNavigationBarItem(
-              icon: Icon(Icons.map), label: 'Restaurant Maps'),
+              icon: Icon(Icons.map), label: 'University Maps'),
           BottomNavigationBarItem(
-              icon: Icon(Icons.fastfood), label: 'departments Table'),
+              icon: Icon(Icons.business_outlined),
+              label: 'University Buildings'),
         ],
       ),
     );
