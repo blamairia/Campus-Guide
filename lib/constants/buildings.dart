@@ -1,6 +1,6 @@
-List<Map> departments = [
+List<Map> buildings = [
   {
-    'id': '0',
+    'id': 0,
     'name': 'Departement de geologie',
     'items': '10 class TD',
     'image': 'https://api.time.com/wp-content/uploads/2016/04/starbucks.jpeg',
@@ -10,7 +10,7 @@ List<Map> departments = [
     },
   },
   {
-    'id': '2',
+    'id': 1,
     'name': 'Departement Informatique',
     'items': 'class td , class TP,',
     'image':
@@ -18,11 +18,10 @@ List<Map> departments = [
     'coordinates': {
       'latitude': '36.81406773770645',
       'longitude': '7.717930181666767',
-
     },
   },
   {
-    'id': '3',
+    'id': 2,
     'name': 'Bikoura',
     'items': 'Trem, bzazel',
     'image':
@@ -33,7 +32,7 @@ List<Map> departments = [
     },
   },
   {
-    'id': '4',
+    'id': 3,
     'name': 'Departement Mathematique',
     'items': 'Khebachin',
     'image':

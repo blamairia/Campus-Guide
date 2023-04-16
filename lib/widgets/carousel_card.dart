@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../constants/departments.dart';
+import '../constants/buildings.dart';
 
 Widget carouselCard(int index, num distance, num duration) {
   return Card(
@@ -20,11 +20,11 @@ Widget carouselCard(int index, num distance, num duration) {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  departments[index]['name'],
+                  buildings[index]['name'],
                   style: const TextStyle(
                       fontWeight: FontWeight.bold, fontSize: 16),
                 ),
-                Text(departments[index]['items'],
+                Text(buildings[index]['items'],
                     overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 5),
                 Text(

@@ -2,7 +2,7 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mapbox_gl/mapbox_gl.dart';
-import 'package:mapbox_navigation/constants/departments.dart';
+import 'package:mapbox_navigation/constants/buildings.dart';
 import 'package:mapbox_navigation/helpers/commons.dart';
 import 'package:mapbox_navigation/helpers/shared_prefs.dart';
 import 'package:mapbox_navigation/widgets/carousel_card.dart';
@@ -19,7 +19,7 @@ class _UniversityMapState extends State<UniversityMap> {
   LatLng latlng = getLatLngFromSharedPrefs();
   late CameraPosition _initialCameraPosition;
   late MapboxMapController controller;
-  late List<CameraPosition> _kDdepartementsList;
+  late List<CameraPosition> _kDbuildingsList;
   List<Map> carouselData = [];
 
   // Carousel related
@@ -31,7 +31,7 @@ class _UniversityMapState extends State<UniversityMap> {
     _initialCameraPosition = CameraPosition(target: latlng, zoom: 15);
 
     // Calculate the distance and time from data in SharedPreferences
-    for (int index = 0; index < departments.length; index++) {
+    for (int index = 0; index < buildings.length; index++) {
       num distance = getDistanceFromSharedPrefs(index) / 1000;
       num duration = getDurationFromSharedPrefs(index) / 60;
       carouselData
@@ -42,7 +42,7 @@ class _UniversityMapState extends State<UniversityMap> {
 
     // Generate the list of carousel widgets
     carouselItems = List<Widget>.generate(
-      departments.length,
+      buildings.length,
       (index) => carouselCard(
         carouselData[index]['index'],
         carouselData[index]['distance'],
@@ -51,8 +51,8 @@ class _UniversityMapState extends State<UniversityMap> {
     );
 
     // initialize map symbols in the same order as carousel widgets
-    _kDdepartementsList = List<CameraPosition>.generate(
-      departments.length,
+    _kDbuildingsList = List<CameraPosition>.generate(
+      buildings.length,
       (index) => CameraPosition(
         target: getLatLngFromDepartmentData(carouselData[index]['index']),
         zoom: 15,
@@ -62,8 +62,8 @@ class _UniversityMapState extends State<UniversityMap> {
 
   _addSourceAndLineLayer(int index, bool removeLayer) async {
     // Can animate camera to focus on the item
-    controller.animateCamera(
-        CameraUpdate.newCameraPosition(_kDdepartementsList[index]));
+    controller
+        .animateCamera(CameraUpdate.newCameraPosition(_kDbuildingsList[index]));
     // Add a polyLine between source and destination
     Map geometry = getGeometryFromSharedPrefs(
       carouselData[index]['index'],
@@ -100,11 +100,23 @@ class _UniversityMapState extends State<UniversityMap> {
 
   _onMapCreated(MapboxMapController controller) async {
     this.controller = controller;
+    _onStyleLoadedCallback();
   }
 
   _onStyleLoadedCallback() async {
-    for (CameraPosition _kDdepartementsList in _kDdepartementsList) {
-      await controller.addSymbol(SymbolOptions.defaultOptions);
+    for (CameraPosition _kDepartment in _kDbuildingsList) {
+      await controller.addSymbol(
+        SymbolOptions(
+          geometry: _kDepartment.target,
+          iconSize: 0.1,
+          iconImage: "assets/icon/skyscraper.png",
+          textField: buildings[_kDbuildingsList.indexOf(_kDepartment)]['name'],
+          textOffset: const Offset(0, 2),
+          textColor: "#666666",
+          textSize: 10,
+          textMaxWidth: 5,
+        ),
+      );
     }
     _addSourceAndLineLayer(0, false);
   }
@@ -126,6 +138,7 @@ class _UniversityMapState extends State<UniversityMap> {
                 onMapCreated: _onMapCreated,
                 myLocationEnabled: true,
                 myLocationTrackingMode: MyLocationTrackingMode.TrackingGPS,
+                minMaxZoomPreference: const MinMaxZoomPreference(14, 30),
               ),
             ),
             CarouselSlider(
@@ -139,18 +152,8 @@ class _UniversityMapState extends State<UniversityMap> {
                 onPageChanged: (index, reason) {
                   setState(() {
                     pageIndex = index;
-                    controller.animateCamera(
-                      CameraUpdate.newCameraPosition(
-                        CameraPosition(
-                          target: getLatLngFromDepartmentData(
-                              carouselData[index]['index']),
-                          zoom: 15,
-                        ),
-                      ),
-                    );
                   });
                   _addSourceAndLineLayer(index, true);
-                  _onStyleLoadedCallback();
                 },
               ),
             ),

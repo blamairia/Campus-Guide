@@ -1,17 +1,17 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:mapbox_navigation/constants/departments.dart';
+import 'package:mapbox_navigation/constants/buildings.dart';
 import 'package:mapbox_navigation/helpers/shared_prefs.dart';
 
-class departmentsTable extends StatefulWidget {
-  const departmentsTable({Key? key}) : super(key: key);
+class buildingsTable extends StatefulWidget {
+  const buildingsTable({Key? key}) : super(key: key);
 
   @override
-  State<departmentsTable> createState() => _departmentsTableState();
+  State<buildingsTable> createState() => _buildingsTableState();
 }
 
-class _departmentsTableState extends State<departmentsTable> {
+class _buildingsTableState extends State<buildingsTable> {
   /// Add handlers to buttons later on
   /// For call and maps we can use url_launcher package.
   /// We can also create a turn-by-turn navigation for a particular restaurant.
@@ -41,7 +41,7 @@ class _departmentsTableState extends State<departmentsTable> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('departments Table'),
+        title: const Text('buildings Table'),
       ),
       body: SafeArea(
           child: SingleChildScrollView(
@@ -70,7 +70,7 @@ class _departmentsTableState extends State<departmentsTable> {
                 physics: const NeverScrollableScrollPhysics(),
                 shrinkWrap: true,
                 padding: EdgeInsets.zero,
-                itemCount: departments.length,
+                itemCount: buildings.length,
                 itemBuilder: (BuildContext context, int index) {
                   return Card(
                     clipBehavior: Clip.antiAlias,
@@ -83,7 +83,7 @@ class _departmentsTableState extends State<departmentsTable> {
                           height: 200,
                           width: 140,
                           fit: BoxFit.cover,
-                          imageUrl: departments[index]['image'],
+                          imageUrl: buildings[index]['image'],
                         ),
                         Expanded(
                           child: Container(
@@ -93,12 +93,12 @@ class _departmentsTableState extends State<departmentsTable> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  departments[index]['name'],
+                                  buildings[index]['name'],
                                   style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16),
                                 ),
-                                Text(departments[index]['items']),
+                                Text(buildings[index]['items']),
                                 const Spacer(),
                                 Text(
                                     "Distance : ${getDistanceFromSharedPrefs(index)} m"),

@@ -4,7 +4,7 @@ import 'dart:ffi';
 import 'package:flutter/material.dart';
 import 'package:location/location.dart';
 import 'package:mapbox_gl/mapbox_gl.dart';
-import 'package:mapbox_navigation/constants/departments.dart';
+import 'package:mapbox_navigation/constants/buildings.dart';
 import 'package:mapbox_navigation/helpers/directions_handler.dart';
 import 'package:mapbox_navigation/main.dart';
 import 'package:mapbox_navigation/screens/university_table.dart';
@@ -51,7 +51,7 @@ class _SplashState extends State<Splash> {
     sharedPreferences.setDouble('longitude', _locationData.longitude!);
 
     // Get and store the directions API response in sharedPreferences
-    for (int i = 0; i < departments.length; i++) {
+    for (int i = 0; i < buildings.length; i++) {
       Map modifiedResponse = await getDirectionsAPIResponse(currentLatlng, i);
       saveDirectionsAPIResponse(i, json.encode(modifiedResponse));
     }
