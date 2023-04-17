@@ -138,6 +138,7 @@ class _UniversityMapState extends State<UniversityMap> {
                 onMapCreated: _onMapCreated,
                 myLocationEnabled: true,
                 myLocationTrackingMode: MyLocationTrackingMode.TrackingGPS,
+                onStyleLoadedCallback: _onStyleLoadedCallback,
                 minMaxZoomPreference: const MinMaxZoomPreference(14, 30),
               ),
             ),
