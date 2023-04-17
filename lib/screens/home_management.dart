@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mapbox_navigation/screens/university_map.dart';
-import 'package:mapbox_navigation/screens/university_table.dart';
+import 'package:ubmap/screens/university_map.dart';
+import 'package:ubmap/screens/university_table.dart';
 
 class HomeManagement extends StatefulWidget {
   const HomeManagement({Key? key}) : super(key: key);

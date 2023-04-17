@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
-project(mapbox_navigation LANGUAGES CXX)
+project(ubmap LANGUAGES CXX)
 
-set(BINARY_NAME "mapbox_navigation")
+set(BINARY_NAME "ubmap")
 
 cmake_policy(SET CMP0063 NEW)
 

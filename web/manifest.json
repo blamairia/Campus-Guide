@@ -1,6 +1,6 @@
 {
-    "name": "mapbox_navigation",
-    "short_name": "mapbox_navigation",
+    "name": "ubmap",
+    "short_name": "ubmap",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
