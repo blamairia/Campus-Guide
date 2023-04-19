@@ -10,8 +10,9 @@ Widget carouselCard(int index, num distance, num duration) {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const CircleAvatar(
-            backgroundImage: AssetImage('assets/image/bikoura.jpg'),
+          CircleAvatar(
+            backgroundImage:
+                AssetImage('assets/image/' + buildings[index]['image']),
             radius: 20,
           ),
           const SizedBox(width: 10),
@@ -24,11 +25,11 @@ Widget carouselCard(int index, num distance, num duration) {
                   style: const TextStyle(
                       fontWeight: FontWeight.bold, fontSize: 16),
                 ),
-                Text(buildings[index]['items'],
-                    overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 5),
                 Text(
-                  '${distance.toStringAsFixed(2)}kms, ${duration.toStringAsFixed(2)} mins',
+                  '${distance.toStringAsFixed(2)}kms,'
+                  ' \n ${duration.toStringAsFixed(2)} mins',
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(color: Colors.tealAccent),
                 )
               ],

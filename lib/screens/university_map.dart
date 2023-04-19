@@ -2,10 +2,11 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mapbox_gl/mapbox_gl.dart';
-import 'package:mapbox_navigation/constants/buildings.dart';
 import 'package:mapbox_navigation/helpers/commons.dart';
-import 'package:mapbox_navigation/helpers/shared_prefs.dart';
-import 'package:mapbox_navigation/widgets/carousel_card.dart';
+
+import '../constants/buildings.dart';
+import '../helpers/shared_prefs.dart';
+import '../widgets/carousel_card.dart';
 
 class UniversityMap extends StatefulWidget {
   const UniversityMap({Key? key}) : super(key: key);
@@ -16,19 +17,21 @@ class UniversityMap extends StatefulWidget {
 
 class _UniversityMapState extends State<UniversityMap> {
   // Mapbox related
-  LatLng latlng = getLatLngFromSharedPrefs();
+  LatLng latLng = getLatLngFromSharedPrefs();
   late CameraPosition _initialCameraPosition;
   late MapboxMapController controller;
-  late List<CameraPosition> _kDbuildingsList;
+  late List<CameraPosition> _kbuildingsList;
   List<Map> carouselData = [];
 
   // Carousel related
   int pageIndex = 0;
+  bool accessed = false;
   late List<Widget> carouselItems;
+
   @override
   void initState() {
     super.initState();
-    _initialCameraPosition = CameraPosition(target: latlng, zoom: 15);
+    _initialCameraPosition = CameraPosition(target: latLng, zoom: 15);
 
     // Calculate the distance and time from data in SharedPreferences
     for (int index = 0; index < buildings.length; index++) {
@@ -37,33 +40,27 @@ class _UniversityMapState extends State<UniversityMap> {
       carouselData
           .add({'index': index, 'distance': distance, 'duration': duration});
     }
-
     carouselData.sort((a, b) => a['duration'] < b['duration'] ? 0 : 1);
 
     // Generate the list of carousel widgets
     carouselItems = List<Widget>.generate(
-      buildings.length,
-      (index) => carouselCard(
-        carouselData[index]['index'],
-        carouselData[index]['distance'],
-        carouselData[index]['duration'],
-      ),
-    );
+        buildings.length,
+        (index) => carouselCard(carouselData[index]['index'],
+            carouselData[index]['distance'], carouselData[index]['duration']));
 
     // initialize map symbols in the same order as carousel widgets
-    _kDbuildingsList = List<CameraPosition>.generate(
-      buildings.length,
-      (index) => CameraPosition(
-        target: getLatLngFromDepartmentData(carouselData[index]['index']),
-        zoom: 15,
-      ),
-    );
+    _kbuildingsList = List<CameraPosition>.generate(
+        buildings.length,
+        (index) => CameraPosition(
+            target: getLatLngFromDepartmentData(carouselData[index]['index']),
+            zoom: 15));
   }
 
   _addSourceAndLineLayer(int index, bool removeLayer) async {
     // Can animate camera to focus on the item
+    if (controller == null) return;
     controller
-        .animateCamera(CameraUpdate.newCameraPosition(_kDbuildingsList[index]));
+        .animateCamera(CameraUpdate.newCameraPosition(_kbuildingsList[index]));
     // Add a polyLine between source and destination
     Map geometry = getGeometryFromSharedPrefs(
       carouselData[index]['index'],
@@ -100,32 +97,13 @@ class _UniversityMapState extends State<UniversityMap> {
 
   _onMapCreated(MapboxMapController controller) async {
     this.controller = controller;
-    _onStyleLoadedCallback();
-  }
-
-  _onStyleLoadedCallback() async {
-    for (CameraPosition _kDepartment in _kDbuildingsList) {
-      await controller.addSymbol(
-        SymbolOptions(
-          geometry: _kDepartment.target,
-          iconSize: 0.1,
-          iconImage: "assets/icon/skyscraper.png",
-          textField: buildings[_kDbuildingsList.indexOf(_kDepartment)]['name'],
-          textOffset: const Offset(0, 2),
-          textColor: "#666666",
-          textSize: 10,
-          textMaxWidth: 5,
-        ),
-      );
-    }
-    _addSourceAndLineLayer(0, false);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('University Map'),
+        title: const Text('Restaurants Map'),
       ),
       body: SafeArea(
         child: Stack(
@@ -133,24 +111,24 @@ class _UniversityMapState extends State<UniversityMap> {
             SizedBox(
               height: MediaQuery.of(context).size.height * 0.8,
               child: MapboxMap(
-                initialCameraPosition: _initialCameraPosition,
                 accessToken: dotenv.env['MAPBOX_ACCESS_TOKEN'],
+                initialCameraPosition: _initialCameraPosition,
                 onMapCreated: _onMapCreated,
                 myLocationEnabled: true,
                 myLocationTrackingMode: MyLocationTrackingMode.TrackingGPS,
-                onStyleLoadedCallback: _onStyleLoadedCallback,
-                minMaxZoomPreference: const MinMaxZoomPreference(14, 30),
+                minMaxZoomPreference: const MinMaxZoomPreference(14, 17),
               ),
             ),
             CarouselSlider(
               items: carouselItems,
               options: CarouselOptions(
-                height: 134,
+                height: 120,
                 viewportFraction: 0.6,
                 initialPage: 0,
                 enableInfiniteScroll: false,
                 scrollDirection: Axis.horizontal,
-                onPageChanged: (index, reason) {
+                onPageChanged:
+                    (int index, CarouselPageChangedReason reason) async {
                   setState(() {
                     pageIndex = index;
                   });
@@ -164,10 +142,9 @@ class _UniversityMapState extends State<UniversityMap> {
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           controller.animateCamera(
-            CameraUpdate.newCameraPosition(_initialCameraPosition),
-          );
+              CameraUpdate.newCameraPosition(_initialCameraPosition));
         },
-        child: const Icon(Icons.my_location_outlined),
+        child: const Icon(Icons.my_location),
       ),
     );
   }

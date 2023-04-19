@@ -58,7 +58,7 @@ class _buildingsTableState extends State<buildingsTable> {
                   child: Icon(Icons.search),
                 ),
                 padding: EdgeInsets.all(15),
-                placeholder: 'Search dish or restaurant name',
+                placeholder: 'Search For a Building or a place by name',
                 style: TextStyle(color: Colors.white),
                 decoration: BoxDecoration(
                   color: Colors.black54,
@@ -79,11 +79,11 @@ class _buildingsTableState extends State<buildingsTable> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        CachedNetworkImage(
+                        Image.asset(
+                          'assets/image/${buildings[index]['image']}',
                           height: 200,
                           width: 140,
                           fit: BoxFit.cover,
-                          imageUrl: buildings[index]['image'],
                         ),
                         Expanded(
                           child: Container(

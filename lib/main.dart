@@ -10,6 +10,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   sharedPreferences = await SharedPreferences.getInstance();
   await dotenv.load(fileName: "assets/config/.env");
+
   runApp(const MyApp());
 }
 
