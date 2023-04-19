@@ -1,8 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:mapbox_navigation/constants/buildings.dart';
-import 'package:mapbox_navigation/helpers/shared_prefs.dart';
+import 'package:ubmap/constants/buildings.dart';
+import 'package:ubmap/helpers/shared_prefs.dart';
 
 class buildingsTable extends StatefulWidget {
   const buildingsTable({Key? key}) : super(key: key);

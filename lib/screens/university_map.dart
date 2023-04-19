@@ -2,11 +2,10 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mapbox_gl/mapbox_gl.dart';
-import 'package:mapbox_navigation/helpers/commons.dart';
-
-import '../constants/buildings.dart';
-import '../helpers/shared_prefs.dart';
-import '../widgets/carousel_card.dart';
+import 'package:ubmap/constants/buildings.dart';
+import 'package:ubmap/helpers/commons.dart';
+import 'package:ubmap/helpers/shared_prefs.dart';
+import 'package:ubmap/widgets/carousel_card.dart';
 
 class UniversityMap extends StatefulWidget {
   const UniversityMap({Key? key}) : super(key: key);

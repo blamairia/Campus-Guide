@@ -1,5 +1,5 @@
 import 'package:mapbox_gl/mapbox_gl.dart';
-import 'package:mapbox_navigation/main.dart';
+import 'package:ubmap/main.dart';
 
 import '../constants/buildings.dart';
 import '../requests/mapbox_requests.dart';

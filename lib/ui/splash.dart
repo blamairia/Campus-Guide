@@ -4,10 +4,10 @@ import 'dart:ffi';
 import 'package:flutter/material.dart';
 import 'package:location/location.dart';
 import 'package:mapbox_gl/mapbox_gl.dart';
-import 'package:mapbox_navigation/constants/buildings.dart';
-import 'package:mapbox_navigation/helpers/directions_handler.dart';
-import 'package:mapbox_navigation/main.dart';
-import 'package:mapbox_navigation/screens/university_table.dart';
+import 'package:ubmap/constants/buildings.dart';
+import 'package:ubmap/helpers/directions_handler.dart';
+import 'package:ubmap/main.dart';
+import 'package:ubmap/screens/university_table.dart';
 
 import '../screens/home_management.dart';
 

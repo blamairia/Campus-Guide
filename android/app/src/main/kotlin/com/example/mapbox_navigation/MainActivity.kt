@@ -1,4 +1,4 @@
-package com.example.mapbox_navigation
+package com.example.ubmap
 
 import io.flutter.embedding.android.FlutterActivity
 
