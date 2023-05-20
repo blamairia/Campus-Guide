@@ -51,10 +51,7 @@ class _SplashState extends State<Splash> {
     sharedPreferences.setDouble('longitude', _locationData.longitude!);
 
     // Get and store the directions API response in sharedPreferences
-    for (int i = 0; i < buildings.length; i++) {
-      Map modifiedResponse = await getDirectionsAPIResponse(currentLatlng, i);
-      saveDirectionsAPIResponse(i, json.encode(modifiedResponse));
-    }
+
     Future.delayed(
         const Duration(seconds: 1),
         () => Navigator.pushAndRemoveUntil(

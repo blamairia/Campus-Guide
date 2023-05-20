@@ -100,8 +100,6 @@ class _buildingsTableState extends State<buildingsTable> {
                                 ),
                                 Text(buildings[index]['items']),
                                 const Spacer(),
-                                Text(
-                                    "Distance : ${getDistanceFromSharedPrefs(index)} m"),
                                 Row(
                                   children: [
                                     cardButtons(Icons.call, 'Call'),

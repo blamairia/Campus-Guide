@@ -43,6 +43,7 @@ dependencies:
   dio: ^4.0.4
   flutter_dotenv: ^5.0.2
   flutter_mapbox_navigation: ^0.0.26
+  geocoding: ^2.1.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
