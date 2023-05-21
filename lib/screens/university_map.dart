@@ -193,8 +193,8 @@ class _UniversityMapState extends State<UniversityMap> {
               CarouselSlider(
                 items: carouselItems,
                 options: CarouselOptions(
-                  height: 150,
-                  viewportFraction: 0.6,
+                  height: MediaQuery.of(context).size.height / 7.5,
+                  viewportFraction: 0.7,
                   initialPage: 0,
                   enableInfiniteScroll: false,
                   scrollDirection: Axis.horizontal,

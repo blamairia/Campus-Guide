@@ -61,11 +61,12 @@ class _SplashState extends State<Splash> {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          buildUniversityCard("University 1", 'assets/image/Ag.jpg', buildings),
           buildUniversityCard(
-              "University 2", 'assets/image/Ag.jpg', buildings2),
+              "University Sidi Amar", 'assets/image/Ag.jpg', buildings),
           buildUniversityCard(
-              "University 3", 'assets/image/Ag.jpg', buildings3),
+              "University Bouni", 'assets/image/Ag.jpg', buildings2),
+          buildUniversityCard(
+              "University Sidi Achor", 'assets/image/Ag.jpg', buildings3),
         ],
       ),
     );
@@ -84,7 +85,7 @@ class _SplashState extends State<Splash> {
         child: Card(
           child: ListTile(
             leading: Image.asset('$image'),
-            title: Text(title),
+            title: Center(child: Text(title)),
             onTap: () => Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(
