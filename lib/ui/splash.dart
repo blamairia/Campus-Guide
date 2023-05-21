@@ -15,7 +15,7 @@ class Splash extends StatefulWidget {
   const Splash({Key? key}) : super(key: key);
 
   @override
-  State<Splash> createState() => _SplashState();
+  _SplashState createState() => _SplashState();
 }
 
 class _SplashState extends State<Splash> {
@@ -52,19 +52,48 @@ class _SplashState extends State<Splash> {
 
     // Get and store the directions API response in sharedPreferences
 
-    Future.delayed(
-        const Duration(seconds: 1),
-        () => Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (_) => const HomeManagement()),
-            (route) => false));
+    //  Commented this to prevent it from automatically navigating to HomeManagement
   }
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.black,
-      child: Center(child: Image.asset('assets/image/splash.png')),
+    return Scaffold(
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          buildUniversityCard("University 1", 'assets/image/Ag.jpg', buildings),
+          buildUniversityCard(
+              "University 2", 'assets/image/Ag.jpg', buildings2),
+          buildUniversityCard(
+              "University 3", 'assets/image/Ag.jpg', buildings3),
+        ],
+      ),
     );
+  }
+
+  Widget buildUniversityCard(String title, String image, List<Map> buildings) {
+    return GestureDetector(
+        onTap: () => Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder: (_) => HomeManagement(
+                buildings: buildings,
+              ),
+            ),
+            (route) => false),
+        child: Card(
+          child: ListTile(
+            leading: Image.asset('$image'),
+            title: Text(title),
+            onTap: () => Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => HomeManagement(
+                    buildings: buildings,
+                  ),
+                ),
+                (route) => false),
+          ),
+        ));
   }
 }

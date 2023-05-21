@@ -170,3 +170,49 @@ List<Map> buildings = [
     },
   },
 ];
+
+List<Map> buildings2 = [
+  {
+    'id': 1,
+    'name': 'ENV RESEARCH CENTER',
+    'items': '/',
+    'image': 'Environnement de recherche .jpg',
+    'coordinates': {
+      'latitude': '36.8107767776279',
+      'longitude': '7.7181932402819635',
+    },
+  },
+  {
+    'id': 2,
+    'name': 'Bloc J',
+    'items': '/',
+    'image': 'Bloc J.jpg',
+    'coordinates': {
+      'latitude': '36.81364568583083',
+      'longitude': '7.720381922823343',
+    },
+  },
+];
+
+List<Map> buildings3 = [
+  {
+    'id': 1,
+    'name': 'ENV RESEARCH 3',
+    'items': '/',
+    'image': 'Environnement de recherche .jpg',
+    'coordinates': {
+      'latitude': '36.8107767776279',
+      'longitude': '7.7181932402819635',
+    },
+  },
+  {
+    'id': 2,
+    'name': 'Blo333 J',
+    'items': '/',
+    'image': 'Bloc J.jpg',
+    'coordinates': {
+      'latitude': '36.81364568583083',
+      'longitude': '7.720381922823343',
+    },
+  },
+];

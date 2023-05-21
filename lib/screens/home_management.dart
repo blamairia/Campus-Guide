@@ -3,18 +3,24 @@ import 'package:ubmap/screens/university_map.dart';
 import 'package:ubmap/screens/university_table.dart';
 
 class HomeManagement extends StatefulWidget {
-  const HomeManagement({Key? key}) : super(key: key);
+  final List<Map> buildings;
+
+  const HomeManagement({Key? key, required this.buildings}) : super(key: key);
 
   @override
   State<HomeManagement> createState() => _HomeManagementState();
 }
 
 class _HomeManagementState extends State<HomeManagement> {
-  final List<Widget> _pages = [const UniversityMap(), const buildingsTable()];
   int _index = 0;
 
   @override
   Widget build(BuildContext context) {
+    List<Widget> _pages = [
+      UniversityMap(buildings: widget.buildings),
+      buildingsTable(buildings: widget.buildings),
+    ];
+
     return Scaffold(
       body: IndexedStack(
         index: _index,

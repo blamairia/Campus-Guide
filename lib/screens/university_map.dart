@@ -4,14 +4,14 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mapbox_gl/mapbox_gl.dart';
-import 'package:ubmap/constants/buildings.dart';
 import 'package:ubmap/helpers/commons.dart';
 import 'package:ubmap/helpers/directions_handler.dart';
 import 'package:ubmap/helpers/shared_prefs.dart';
 import 'package:ubmap/widgets/carousel_card.dart';
 
 class UniversityMap extends StatefulWidget {
-  const UniversityMap({Key? key}) : super(key: key);
+  const UniversityMap({Key? key, required this.buildings}) : super(key: key);
+  final List<Map> buildings;
 
   @override
   State<UniversityMap> createState() => _UniversityMapState();
@@ -31,7 +31,7 @@ class _UniversityMapState extends State<UniversityMap> {
     super.initState();
     _initialCameraPosition = CameraPosition(target: latLng, zoom: 15);
     _kbuildingsList = List<CameraPosition>.generate(
-        buildings.length,
+        widget.buildings.length,
         (index) => CameraPosition(
             target: getLatLngFromDepartmentData(index), zoom: 15));
     getInitialDirectionsData();
@@ -46,13 +46,13 @@ class _UniversityMapState extends State<UniversityMap> {
 
     carouselData.add({'index': 0, 'distance': distance, 'duration': duration});
 
-    for (int index = 1; index < buildings.length; index++) {
+    for (int index = 1; index < widget.buildings.length; index++) {
       carouselData.add({'index': index, 'distance': 0, 'duration': 0});
     }
 
     setState(() {
       carouselItems = List<Widget>.generate(
-        buildings.length,
+        widget.buildings.length,
         (index) => carouselCard(
           carouselData[index]['index'],
           carouselData[index]['distance'],
@@ -153,7 +153,8 @@ class _UniversityMapState extends State<UniversityMap> {
           geometry: _kDepartment.target,
           iconSize: 0.1,
           iconImage: "assets/icon/skyscraper.png",
-          textField: buildings[_kbuildingsList.indexOf(_kDepartment)]['name'],
+          textField: widget.buildings[_kbuildingsList.indexOf(_kDepartment)]
+              ['name'],
           textSize: 12.5,
           textOffset: const Offset(0, 0.8),
           textAnchor: 'top',
@@ -192,7 +193,7 @@ class _UniversityMapState extends State<UniversityMap> {
               CarouselSlider(
                 items: carouselItems,
                 options: CarouselOptions(
-                  height: 120,
+                  height: 150,
                   viewportFraction: 0.6,
                   initialPage: 0,
                   enableInfiniteScroll: false,

@@ -1,21 +1,19 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:ubmap/constants/buildings.dart';
 import 'package:ubmap/helpers/shared_prefs.dart';
 
 class buildingsTable extends StatefulWidget {
-  const buildingsTable({Key? key}) : super(key: key);
+  final List<dynamic> buildings;
+
+  const buildingsTable({Key? key, required this.buildings}) : super(key: key);
 
   @override
   State<buildingsTable> createState() => _buildingsTableState();
 }
 
 class _buildingsTableState extends State<buildingsTable> {
-  /// Add handlers to buttons later on
-  /// For call and maps we can use url_launcher package.
-  /// We can also create a turn-by-turn navigation for a particular restaurant.
-  /// 🔥 Let's look at it in the next video!!
+  _buildingsTableState();
 
   Widget cardButtons(IconData iconData, String label) {
     return Padding(
@@ -70,7 +68,7 @@ class _buildingsTableState extends State<buildingsTable> {
                 physics: const NeverScrollableScrollPhysics(),
                 shrinkWrap: true,
                 padding: EdgeInsets.zero,
-                itemCount: buildings.length,
+                itemCount: widget.buildings.length,
                 itemBuilder: (BuildContext context, int index) {
                   return Card(
                     clipBehavior: Clip.antiAlias,
@@ -80,7 +78,7 @@ class _buildingsTableState extends State<buildingsTable> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Image.asset(
-                          'assets/image/${buildings[index]['image']}',
+                          'assets/image/${widget.buildings[index]['image']}',
                           height: 200,
                           width: 140,
                           fit: BoxFit.cover,
@@ -93,12 +91,12 @@ class _buildingsTableState extends State<buildingsTable> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  buildings[index]['name'],
+                                  widget.buildings[index]['name'],
                                   style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16),
                                 ),
-                                Text(buildings[index]['items']),
+                                Text(widget.buildings[index]['items']),
                                 const Spacer(),
                                 Row(
                                   children: [
