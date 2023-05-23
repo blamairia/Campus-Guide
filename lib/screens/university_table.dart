@@ -75,6 +75,12 @@ class _buildingsTableState extends State<buildingsTable> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Image.asset(
+                          'assets/image/${widget.buildings[index]['image']}',
+                          height: 200,
+                          width: 140,
+                          fit: BoxFit.cover,
+                        ),
                         Expanded(
                           child: Container(
                             height: 200,

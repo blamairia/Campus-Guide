@@ -10,6 +10,14 @@ Widget carouselCard(Map building, num distance, num duration) {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              AspectRatio(
+                aspectRatio: 1,
+                child: CircleAvatar(
+                  backgroundImage:
+                      AssetImage('assets/image/' + building['image']),
+                  radius: constraints.maxWidth * 0.10, // 10% of parent width
+                ),
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(

@@ -1,13 +1,8 @@
-import 'dart:convert';
-import 'dart:ffi';
-
 import 'package:flutter/material.dart';
 import 'package:location/location.dart';
 import 'package:mapbox_gl/mapbox_gl.dart';
 import 'package:ubmap/constants/buildings.dart';
-import 'package:ubmap/helpers/directions_handler.dart';
 import 'package:ubmap/main.dart';
-import 'package:ubmap/screens/university_table.dart';
 
 import '../screens/home_management.dart';
 
@@ -19,6 +14,9 @@ class Splash extends StatefulWidget {
 }
 
 class _SplashState extends State<Splash> {
+  List<List<Map>> buildingList = [buildings, buildings2, buildings3];
+  int currentPage = 0;
+
   @override
   void initState() {
     super.initState();
@@ -58,43 +56,63 @@ class _SplashState extends State<Splash> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          buildUniversityCard(
-              "University Sidi Amar", 'assets/image/Ag.jpg', buildings),
-          buildUniversityCard(
-              "University Bouni", 'assets/image/Ag.jpg', buildings2),
-          buildUniversityCard(
-              "University Sidi Achor", 'assets/image/Ag.jpg', buildings3),
-        ],
-      ),
-    );
-  }
-
-  Widget buildUniversityCard(String title, String image, List<Map> buildings) {
-    return GestureDetector(
-        onTap: () => Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(
-              builder: (_) => HomeManagement(
-                buildings: buildings,
+      body: PageView.builder(
+        itemCount: 3,
+        onPageChanged: (int index) {
+          setState(() {
+            currentPage = index;
+          });
+        },
+        itemBuilder: (BuildContext context, int index) {
+          return GestureDetector(
+            onTap: () {
+              Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => HomeManagement(
+                      buildings: buildingList[index],
+                    ),
+                  ),
+                  (route) => false);
+            },
+            child: Container(
+              color: index == 0
+                  ? Color(0xFF678FB4)
+                  : index == 1
+                      ? Color(0xFF65B0B4)
+                      : Color(0xFF9B90BC),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset('assets/image/Ag.jpg', height: 300),
+                  SizedBox(height: 20),
+                  Text(
+                    index == 0
+                        ? "University Sidi Amar"
+                        : index == 1
+                            ? "University Bouni"
+                            : "University Sidi Achor",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 34.0,
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  Text(
+                    'All universities are sorted by ranking',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18.0,
+                    ),
+                  ),
+                ],
               ),
             ),
-            (route) => false),
-        child: Card(
-          child: ListTile(
-            leading: Image.asset('$image'),
-            title: Center(child: Text(title)),
-            onTap: () => Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => HomeManagement(
-                    buildings: buildings,
-                  ),
-                ),
-                (route) => false),
-          ),
-        ));
+          );
+        },
+      ),
+    );
   }
 }
