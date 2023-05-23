@@ -77,8 +77,8 @@ class _buildingsTableState extends State<buildingsTable> {
                       children: [
                         Image.asset(
                           'assets/image/${widget.buildings[index]['image']}',
-                          height: 200,
-                          width: 140,
+                          height: MediaQuery.of(context).size.height / 4,
+                          width: MediaQuery.of(context).size.width / 3,
                           fit: BoxFit.cover,
                         ),
                         Expanded(
