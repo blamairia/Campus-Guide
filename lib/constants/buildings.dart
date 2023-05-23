@@ -173,23 +173,133 @@ List<Map> buildings = [
 
 List<Map> buildings2 = [
   {
-    'id': 1,
-    'name': 'ENV RESEARCH CENTER',
-    'items': '/',
-    'image': 'Environnement de recherche .jpg',
+    'id': 47,
+    'name': 'BLOC PEDAGOGIE.S1-S24',
+    'items': '',
+    'image': 'BLOC PEDAGOGIE.S1-S24.jpg',
     'coordinates': {
-      'latitude': '36.8107767776279',
-      'longitude': '7.7181932402819635',
+      'latitude': '36.862759',
+      'longitude': '7.7727397',
     },
   },
   {
-    'id': 2,
-    'name': 'Bloc J',
-    'items': '/',
-    'image': 'Bloc J.jpg',
+    'id': 48,
+    'name': 'BIBLIOTHEQUE MEDICAL',
+    'items': '',
+    'image': 'BIBLIOTHEQUE MEDICAL.jpg',
     'coordinates': {
-      'latitude': '36.81364568583083',
-      'longitude': '7.720381922823343',
+      'latitude': '36.862178',
+      'longitude': '7.725209',
+    },
+  },
+  {
+    'id': 49,
+    'name': 'AMPHI1',
+    'items': '',
+    'image': 'AMPHI1.JPG',
+    'coordinates': {
+      'latitude': '36.862121',
+      'longitude': '7.725376',
+    },
+  },
+  {
+    'id': 55,
+    'name': 'DECANAT',
+    'items': '',
+    'image': 'DECANAT.jpg',
+    'coordinates': {
+      'latitude': '36.860878',
+      'longitude': '7.723920',
+    },
+  },
+  {
+    'id': 56,
+    'name': 'DEPARTMENT ITALIAN LANGUAGE',
+    'items': '',
+    'image': 'DEPARTMENT ITALIAN LANGUAGE.jpg',
+    'coordinates': {
+      'latitude': '36.861995',
+      'longitude': '7.728301',
+    },
+  },
+  {
+    'id': 58,
+    'name': 'COLLEGE OF ARTS HUMANITIES AND SOCIAL SCIENCES',
+    'items': '',
+    'image': 'COLLEGE OF ARTS HUMANITIES AND SOCIAL SCIENCES.jpg',
+    'coordinates': {
+      'latitude': '36.86231',
+      'longitude': '7.728330',
+    },
+  },
+  {
+    'id': 59,
+    'name': 'AUDITORIUM',
+    'items': '',
+    'image': 'AUDITORIUM.jpg',
+    'coordinates': {
+      'latitude': '36.861465',
+      'longitude': '7.730788',
+    },
+  },
+  {
+    'id': 62,
+    'name': 'LABORATOIRE LANGUAGE',
+    'items': '',
+    'image': 'LABORATOIRE LANGUAGE.jpg',
+    'coordinates': {
+      'latitude': '36.861640',
+      'longitude': '7.7730190',
+    },
+  },
+  {
+    'id': 66,
+    'name': 'DEAN OF THE COLLEGE OF ARTS, HUMANITIES AND SOCIAL SCIENCES',
+    'items': '',
+    'image': 'DEAN OF THE COLLEGE OF ARTS, HUMANITIES AND SOCIAL SCIENCES.jpg',
+    'coordinates': {
+      'latitude': '36.861332',
+      'longitude': '7.7730430',
+    },
+  },
+  {
+    'id': 67,
+    'name': 'DEPARTMENT INFORMATION AND COMMUNICATION SCIENCE',
+    'items': '',
+    'image': 'DEPARTMENT INFORMATION AND COMMUNICATION SCIENCE.jpg',
+    'coordinates': {
+      'latitude': '36.861599',
+      'longitude': '7.729645',
+    },
+  },
+  {
+    'id': 69,
+    'name': 'LABORATOIRE SOCIAL',
+    'items': '',
+    'image': 'LABORATOIRE SOCIAL.jpg',
+    'coordinates': {
+      'latitude': '36.862831',
+      'longitude': '7.7735570',
+    },
+  },
+  {
+    'id': 71,
+    'name': 'DEPARTMENT HISTORY',
+    'items': '',
+    'image': 'DEPARTMENT HISTORY.jpg',
+    'coordinates': {
+      'latitude': '36.862609',
+      'longitude': '7.725419',
+    },
+  },
+  {
+    'id': 75,
+    'name': 'DEPARTMENT ENGLISH LANGUAGE',
+    'items': '',
+    'image': 'DEPARTMENT ENGLISH LANGUAGE.jpg',
+    'coordinates': {
+      'latitude': '36.862595',
+      'longitude': '7.7739260',
     },
   },
 ];

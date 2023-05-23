@@ -1,0 +1,66 @@
+[33mcommit ca60837f0c260b09a14da77970f8fe2ed4473898[m[33m ([m[1;36mHEAD -> [m[1;32mmaster[m[33m)[m
+Author: blamairia <blamairia@gmail.com>
+Date:   Sun May 21 19:53:23 2023 +0100
+
+    working backup with overflow problem corrected
+
+[33mcommit 3b32500b037f795c8e8ad9af7cb3fbea1f7d56b8[m
+Author: blamairia <blamairia@gmail.com>
+Date:   Sun May 21 14:19:13 2023 +0100
+
+     splash screen choose from 3 univ and carousel on demand api call
+
+[33mcommit 0935c7b3783654dd86f1eee09688bc4c65082200[m
+Author: blamairia <blamairia@gmail.com>
+Date:   Sat May 20 23:41:09 2023 +0100
+
+    carousel only update index FAB build route and make api call working
+
+[33mcommit 68322a94d7a001c7c826c25f7b0b2e30618ce912[m
+Merge: 5c54c02 f7a56d3
+Author: blamairia <blamairia@gmail.com>
+Date:   Wed Apr 19 03:18:26 2023 +0100
+
+    memory leak fixed
+
+[33mcommit 5c54c0236c22f82b31a2d1ddba9b9fd0686d2324[m
+Author: blamairia <blamairia@gmail.com>
+Date:   Wed Apr 19 03:11:34 2023 +0100
+
+    fixed the memory leak
+
+[33mcommit 0b3d942e82b3fb2a18c43e0e81485c7e0f927a77[m
+Author: blamairia <blamairia@gmail.com>
+Date:   Mon Apr 17 03:02:44 2023 +0100
+
+     working
+
+[33mcommit f7a56d3e191ba19bdabd3f727cc0da3728d614a4[m[33m ([m[1;31morigin/master[m[33m)[m
+Author: blamairia <blamairia@gmail.com>
+Date:   Mon Apr 17 01:05:52 2023 +0100
+
+    Ubmap changed the logo and splash screen and also added some Data to the buildings
+
+[33mcommit 1ebbc7c1ad58e2380f363e002fc126f2b6368d31[m
+Author: blamairia <blamairia@gmail.com>
+Date:   Sun Apr 16 04:23:34 2023 +0100
+
+    buildings carousel starter code working backuo
+
+[33mcommit 696eb3e0896c22663fadfab7366a154dad380848[m
+Author: blamairia <blamairia@gmail.com>
+Date:   Sun Apr 16 02:39:35 2023 +0100
+
+    working code to show departments only
+
+[33mcommit e167a61e63591ddf2957f5e355e32f55dd6d5570[m
+Author: blamairia <blamairia@gmail.com>
+Date:   Sat Apr 15 03:49:24 2023 +0100
+
+    get distance and time from current user location and every departments from the api
+
+[33mcommit 3db8263f68835b6df8208d8bb38694fedc0bf9e1[m
+Author: blamairia <blamairia@gmail.com>
+Date:   Sat Apr 15 02:39:05 2023 +0100
+
+    starter code for university map

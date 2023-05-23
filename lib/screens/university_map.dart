@@ -38,15 +38,7 @@ class _UniversityMapState extends State<UniversityMap> {
   }
 
   Future<void> getInitialDirectionsData() async {
-    Map modifiedResponse = await getDirectionsAPIResponse(latLng, 0);
-    saveDirectionsAPIResponse(0, json.encode(modifiedResponse));
-
-    num distance = getDistanceFromSharedPrefs(0) / 1000;
-    num duration = getDurationFromSharedPrefs(0) / 60;
-
-    carouselData.add({'index': 0, 'distance': distance, 'duration': duration});
-
-    for (int index = 1; index < widget.buildings.length; index++) {
+    for (int index = 0; index < widget.buildings.length; index++) {
       carouselData.add({'index': index, 'distance': 0, 'duration': 0});
     }
 
@@ -54,10 +46,31 @@ class _UniversityMapState extends State<UniversityMap> {
       carouselItems = List<Widget>.generate(
         widget.buildings.length,
         (index) => carouselCard(
-          carouselData[index]['index'],
+          widget.buildings[index],
           carouselData[index]['distance'],
           carouselData[index]['duration'],
         ),
+      );
+    });
+
+    Map modifiedResponse =
+        await getDirectionsAPIResponse(latLng, widget.buildings[0][0]);
+    saveDirectionsAPIResponse(
+        widget.buildings[0][0], json.encode(modifiedResponse));
+
+    num distance = getDistanceFromSharedPrefs(widget.buildings[0][0]) / 1000;
+    num duration = getDurationFromSharedPrefs(widget.buildings[0][0]) / 60;
+
+    setState(() {
+      carouselData[0] = {
+        'index': widget.buildings[0][0],
+        'distance': distance,
+        'duration': duration
+      };
+      carouselItems[0] = carouselCard(
+        widget.buildings[0],
+        carouselData[0]['distance'],
+        carouselData[0]['duration'],
       );
     });
 
@@ -76,7 +89,7 @@ class _UniversityMapState extends State<UniversityMap> {
             getDurationFromSharedPrefs(pageIndex) / 60;
 
         carouselItems[pageIndex] = carouselCard(
-          pageIndex,
+          widget.buildings[pageIndex],
           carouselData[pageIndex]['distance'],
           carouselData[pageIndex]['duration'],
         );
@@ -98,7 +111,7 @@ class _UniversityMapState extends State<UniversityMap> {
       carouselData[index]['duration'] = getDurationFromSharedPrefs(index) / 60;
 
       carouselItems[index] = carouselCard(
-        index,
+        widget.buildings[index],
         carouselData[index]['distance'],
         carouselData[index]['duration'],
       );
@@ -125,6 +138,11 @@ class _UniversityMapState extends State<UniversityMap> {
     };
 
     if (removeLayer == true) {
+      await controller.removeLayer("lines");
+      await controller.removeSource("fills");
+    }
+
+    if (controller.fills!.isNotEmpty) {
       await controller.removeLayer("lines");
       await controller.removeSource("fills");
     }

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../constants/buildings.dart';
-
-Widget carouselCard(int index, num distance, num duration) {
+Widget carouselCard(Map building, num distance, num duration) {
   return LayoutBuilder(
     builder: (BuildContext context, BoxConstraints constraints) {
       return Card(
@@ -12,14 +10,6 @@ Widget carouselCard(int index, num distance, num duration) {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              AspectRatio(
-                aspectRatio: 1,
-                child: CircleAvatar(
-                  backgroundImage:
-                      AssetImage('assets/image/' + buildings[index]['image']),
-                  radius: constraints.maxWidth * 0.10, // 10% of parent width
-                ),
-              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -27,7 +17,7 @@ Widget carouselCard(int index, num distance, num duration) {
                   children: [
                     Flexible(
                       child: Text(
-                        buildings[index]['name'],
+                        building['name'],
                         style: const TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 16),
                         overflow: TextOverflow.ellipsis,

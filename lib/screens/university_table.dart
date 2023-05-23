@@ -1,7 +1,5 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:ubmap/helpers/shared_prefs.dart';
 
 class buildingsTable extends StatefulWidget {
   final List<dynamic> buildings;
@@ -77,12 +75,6 @@ class _buildingsTableState extends State<buildingsTable> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Image.asset(
-                          'assets/image/${widget.buildings[index]['image']}',
-                          height: 200,
-                          width: 140,
-                          fit: BoxFit.cover,
-                        ),
                         Expanded(
                           child: Container(
                             height: 200,
