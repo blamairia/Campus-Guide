@@ -2,15 +2,15 @@ import 'dart:convert';
 
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:mapbox_gl/mapbox_gl.dart';
-import 'package:ubmap/helpers/commons.dart';
-import 'package:ubmap/helpers/directions_handler.dart';
-import 'package:ubmap/helpers/shared_prefs.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
+import 'package:ubmap/constants/buildings.dart';
+import 'package:ubmap/helpers/distance_utils.dart';
 import 'package:ubmap/widgets/carousel_card.dart';
+import 'package:ubmap/screens/navigation_screen.dart';
+import 'package:ubmap/services/navigation_service.dart';
 
 class UniversityMap extends StatefulWidget {
-  const UniversityMap({Key? key, required this.buildings}) : super(key: key);
+  const UniversityMap({super.key, required this.buildings});
   final List<Map> buildings;
 
   @override
@@ -18,221 +18,311 @@ class UniversityMap extends StatefulWidget {
 }
 
 class _UniversityMapState extends State<UniversityMap> {
-  List<Widget> carouselItems = [];
-  LatLng latLng = getLatLngFromSharedPrefs();
-  late CameraPosition _initialCameraPosition;
-  late MapboxMapController controller;
-  late List<CameraPosition> _kbuildingsList;
-  List<Map> carouselData = [];
-  int pageIndex = 0;
+  mapbox.MapboxMap? _mapboxMap;
+  mapbox.CircleAnnotationManager? _circleAnnotationManager;
+  final NavigationService _navigationService = NavigationService();
+  
+  List<Map> _filteredBuildings = [];
+  List<Map> _buildingData = [];
+  int _pageIndex = 0;
+  double? _userLat;
+  double? _userLng;
+  BuildingType? _selectedFilter;
 
   @override
   void initState() {
     super.initState();
-    _initialCameraPosition = CameraPosition(target: latLng, zoom: 15);
-    _kbuildingsList = List<CameraPosition>.generate(
-        widget.buildings.length,
-        (index) => CameraPosition(
-            target: getLatLngFromDepartmentData(index), zoom: 15));
-    getInitialDirectionsData();
+    _filteredBuildings = List.from(widget.buildings);
+    _initializeData();
   }
 
-  Future<void> getInitialDirectionsData() async {
-    for (int index = 0; index < widget.buildings.length; index++) {
-      carouselData.add({'index': index, 'distance': 0, 'duration': 0});
-    }
-
-    setState(() {
-      carouselItems = List<Widget>.generate(
-        widget.buildings.length,
-        (index) => carouselCard(
-          widget.buildings[index],
-          carouselData[index]['distance'],
-          carouselData[index]['duration'],
-        ),
-      );
-    });
-
-    Map modifiedResponse =
-        await getDirectionsAPIResponse(latLng, widget.buildings[0][0]);
-    saveDirectionsAPIResponse(
-        widget.buildings[0][0], json.encode(modifiedResponse));
-
-    num distance = getDistanceFromSharedPrefs(widget.buildings[0][0]) / 1000;
-    num duration = getDurationFromSharedPrefs(widget.buildings[0][0]) / 60;
-
-    setState(() {
-      carouselData[0] = {
-        'index': widget.buildings[0][0],
-        'distance': distance,
-        'duration': duration
-      };
-      carouselItems[0] = carouselCard(
-        widget.buildings[0],
-        carouselData[0]['distance'],
-        carouselData[0]['duration'],
-      );
-    });
-
-    _addSourceAndLineLayer(0, false);
-  }
-
-  void _onFloatingButtonPressed() async {
-    if (carouselData[pageIndex]['distance'] == 0) {
-      Map modifiedResponse = await getDirectionsAPIResponse(latLng, pageIndex);
-      saveDirectionsAPIResponse(pageIndex, json.encode(modifiedResponse));
-
+  Future<void> _initializeData() async {
+    // Get user location
+    final position = await _navigationService.getCurrentPosition();
+    if (position != null && mounted) {
       setState(() {
-        carouselData[pageIndex]['distance'] =
-            getDistanceFromSharedPrefs(pageIndex) / 1000;
-        carouselData[pageIndex]['duration'] =
-            getDurationFromSharedPrefs(pageIndex) / 60;
-
-        carouselItems[pageIndex] = carouselCard(
-          widget.buildings[pageIndex],
-          carouselData[pageIndex]['distance'],
-          carouselData[pageIndex]['duration'],
-        );
+        _userLat = position.latitude;
+        _userLng = position.longitude;
       });
     }
-
-    controller.animateCamera(
-        CameraUpdate.newCameraPosition(_kbuildingsList[pageIndex]));
-    _addSourceAndLineLayer(pageIndex, true);
+    
+    // Calculate distances using Haversine (instant, no API calls)
+    _calculateDistances();
   }
 
-  void _updateCarouselData(int index) async {
-    Map modifiedResponse = await getDirectionsAPIResponse(latLng, index);
-    saveDirectionsAPIResponse(index, json.encode(modifiedResponse));
+  void _calculateDistances() {
+    _buildingData = [];
+    
+    for (int i = 0; i < _filteredBuildings.length; i++) {
+      final building = _filteredBuildings[i];
+      final lat = double.parse(building['coordinates']['latitude'].toString().trim());
+      final lng = double.parse(building['coordinates']['longitude'].toString().trim());
+      
+      double distance = 0;
+      double duration = 0;
+      
+      if (_userLat != null && _userLng != null) {
+        distance = haversineDistance(_userLat!, _userLng!, lat, lng);
+        duration = estimateWalkingMinutes(distance);
+      }
+      
+      _buildingData.add({
+        'index': i,
+        'distance': distance,
+        'duration': duration,
+        'lat': lat,
+        'lng': lng,
+      });
+    }
+    
+    if (mounted) setState(() {});
+  }
 
+  void _applyFilter(BuildingType? type) {
     setState(() {
-      carouselData[index]['distance'] =
-          getDistanceFromSharedPrefs(index) / 1000;
-      carouselData[index]['duration'] = getDurationFromSharedPrefs(index) / 60;
-
-      carouselItems[index] = carouselCard(
-        widget.buildings[index],
-        carouselData[index]['distance'],
-        carouselData[index]['duration'],
-      );
+      _selectedFilter = type;
+      if (type == null) {
+        _filteredBuildings = List.from(widget.buildings);
+      } else {
+        _filteredBuildings = widget.buildings
+            .where((b) => b['type'] == type)
+            .toList();
+      }
+      _pageIndex = 0;
     });
+    _calculateDistances();
+    
+    // Re-add markers for filtered buildings
+    if (_mapboxMap != null) {
+      _addBuildingMarkers();
+    }
   }
 
-  _addSourceAndLineLayer(int index, bool removeLayer) async {
-    if (controller == null) return;
-    controller
-        .animateCamera(CameraUpdate.newCameraPosition(_kbuildingsList[index]));
-
-    Map geometry = getGeometryFromSharedPrefs(carouselData[index]['index']);
-
-    final _fills = {
-      "type": "FeatureCollection",
-      "features": [
-        {
-          "id": 0,
-          "type": "Feature",
-          "properties": <String, dynamic>{},
-          "geometry": geometry,
-        }
-      ]
-    };
-
-    if (removeLayer == true) {
-      await controller.removeLayer("lines");
-      await controller.removeSource("fills");
-    }
-
-    if (controller.fills!.isNotEmpty) {
-      await controller.removeLayer("lines");
-      await controller.removeSource("fills");
-    }
-
-    await controller.addSource("fills", GeojsonSourceProperties(data: _fills));
-    await controller.addLineLayer(
-      "fills",
-      "lines",
-      LineLayerProperties(
-        lineColor: Colors.blue.toHexStringRGB(),
-        lineCap: "round",
-        lineJoin: "round",
-        lineWidth: 3,
+  void _startNavigation(int index) {
+    if (index >= _filteredBuildings.length) return;
+    
+    final building = _filteredBuildings[index];
+    final lat = double.parse(building['coordinates']['latitude'].toString().trim());
+    final lng = double.parse(building['coordinates']['longitude'].toString().trim());
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => NavigationScreen(
+          destinationLat: lat,
+          destinationLng: lng,
+          destinationName: building['name'],
+        ),
       ),
     );
   }
 
-  _onMapCreated(MapboxMapController controller) async {
-    this.controller = controller;
+  void _onMapCreated(mapbox.MapboxMap mapboxMap) async {
+    _mapboxMap = mapboxMap;
+    
+    // Create circle annotation manager for markers
+    _circleAnnotationManager = await mapboxMap.annotations.createCircleAnnotationManager();
   }
 
-  _onStyleLoadedCallback() async {
-    for (CameraPosition _kDepartment in _kbuildingsList) {
-      await controller.addSymbol(
-        SymbolOptions(
-          geometry: _kDepartment.target,
-          iconSize: 0.1,
-          iconImage: "assets/icon/skyscraper.png",
-          textField: widget.buildings[_kbuildingsList.indexOf(_kDepartment)]
-              ['name'],
-          textSize: 12.5,
-          textOffset: const Offset(0, 0.8),
-          textAnchor: 'top',
-          textColor: '#000000',
-          textHaloBlur: 1,
-          textHaloColor: '#ffffff',
-          textHaloWidth: 0.8,
+  void _onStyleLoaded(mapbox.StyleLoadedEventData data) async {
+    if (_mapboxMap == null) return;
+    
+    // Add building markers
+    await _addBuildingMarkers();
+    
+    // Enable location component
+    _mapboxMap!.location.updateSettings(mapbox.LocationComponentSettings(
+      enabled: true,
+      pulsingEnabled: true,
+    ));
+  }
+
+  Future<void> _addBuildingMarkers() async {
+    if (_circleAnnotationManager == null) return;
+    
+    // Clear existing markers
+    await _circleAnnotationManager!.deleteAll();
+    
+    for (int i = 0; i < _filteredBuildings.length; i++) {
+      final building = _filteredBuildings[i];
+      final lat = double.parse(building['coordinates']['latitude'].toString().trim());
+      final lng = double.parse(building['coordinates']['longitude'].toString().trim());
+      
+      // Color based on type
+      int color = Colors.red.value;
+      final type = building['type'] as BuildingType?;
+      switch (type) {
+        case BuildingType.department:
+          color = Colors.blue.value;
+          break;
+        case BuildingType.amphitheatre:
+          color = Colors.purple.value;
+          break;
+        case BuildingType.library:
+          color = Colors.green.value;
+          break;
+        case BuildingType.admin:
+          color = Colors.orange.value;
+          break;
+        case BuildingType.bloc:
+          color = Colors.teal.value;
+          break;
+        case BuildingType.research:
+          color = Colors.indigo.value;
+          break;
+        default:
+          color = Colors.red.value;
+      }
+      
+      await _circleAnnotationManager!.create(
+        mapbox.CircleAnnotationOptions(
+          geometry: mapbox.Point(coordinates: mapbox.Position(lng, lat)),
+          circleRadius: 10.0,
+          circleColor: color,
+          circleStrokeColor: Colors.white.value,
+          circleStrokeWidth: 2.0,
         ),
       );
     }
-    _addSourceAndLineLayer(0, false);
+  }
+
+  void _onCarouselPageChanged(int index, CarouselPageChangedReason reason) {
+    if (index >= _buildingData.length) return;
+    
+    setState(() {
+      _pageIndex = index;
+    });
+    
+    final data = _buildingData[index];
+    
+    _mapboxMap?.flyTo(
+      mapbox.CameraOptions(
+        center: mapbox.Point(coordinates: mapbox.Position(data['lng'], data['lat'])),
+        zoom: 17,
+      ),
+      mapbox.MapAnimationOptions(duration: 500),
+    );
+  }
+
+  void _centerOnUser() async {
+    final position = await _navigationService.getCurrentPosition();
+    if (position != null && _mapboxMap != null) {
+      _mapboxMap!.flyTo(
+        mapbox.CameraOptions(
+          center: mapbox.Point(coordinates: mapbox.Position(position.longitude, position.latitude)),
+          zoom: 16,
+        ),
+        mapbox.MapAnimationOptions(duration: 500),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Get initial camera center
+    mapbox.Position initialCenter = mapbox.Position(7.718, 36.812);
+    if (_filteredBuildings.isNotEmpty) {
+      final firstBuilding = _filteredBuildings[0];
+      final lat = double.parse(firstBuilding['coordinates']['latitude'].toString().trim());
+      final lng = double.parse(firstBuilding['coordinates']['longitude'].toString().trim());
+      initialCenter = mapbox.Position(lng, lat);
+    }
+    
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Building Map'),
+        title: const Text('Campus Map'),
+        backgroundColor: Colors.green.shade700,
+        foregroundColor: Colors.white,
+        elevation: 0,
       ),
       body: SafeArea(
         child: Column(
           children: [
-            Expanded(
-              child: MapboxMap(
-                accessToken: dotenv.env['MAPBOX_ACCESS_TOKEN'],
-                initialCameraPosition: _initialCameraPosition,
-                onMapCreated: _onMapCreated,
-                myLocationEnabled: true,
-                myLocationTrackingMode: MyLocationTrackingMode.TrackingGPS,
-                minMaxZoomPreference: const MinMaxZoomPreference(14, 17),
-                styleString: "mapbox://styles/mapbox/satellite-v9",
-                onStyleLoadedCallback: _onStyleLoadedCallback,
+            // Filter chips
+            Container(
+              height: 50,
+              color: Colors.green.shade700,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                children: [
+                  _buildFilterChip(null, 'All'),
+                  _buildFilterChip(BuildingType.department, 'Depts'),
+                  _buildFilterChip(BuildingType.amphitheatre, 'Amphis'),
+                  _buildFilterChip(BuildingType.library, 'Libraries'),
+                  _buildFilterChip(BuildingType.admin, 'Admin'),
+                  _buildFilterChip(BuildingType.bloc, 'Blocs'),
+                  _buildFilterChip(BuildingType.research, 'Research'),
+                ],
               ),
             ),
-            if (carouselItems.isNotEmpty)
-              CarouselSlider(
-                items: carouselItems,
-                options: CarouselOptions(
-                  height: MediaQuery.of(context).size.height / 7.5,
-                  viewportFraction: 0.7,
-                  initialPage: 0,
-                  enableInfiniteScroll: false,
-                  scrollDirection: Axis.horizontal,
-                  onPageChanged:
-                      (int index, CarouselPageChangedReason reason) async {
-                    setState(() {
-                      pageIndex = index;
-                      controller.animateCamera(CameraUpdate.newCameraPosition(
-                          _kbuildingsList[pageIndex]));
-                      _addSourceAndLineLayer(pageIndex, true);
-                    });
+            // Map
+            Expanded(
+              child: mapbox.MapWidget(
+                textureView: true,
+                onMapCreated: _onMapCreated,
+                onStyleLoadedListener: _onStyleLoaded,
+                cameraOptions: mapbox.CameraOptions(
+                  center: mapbox.Point(coordinates: initialCenter),
+                  zoom: 15,
+                ),
+                styleUri: mapbox.MapboxStyles.SATELLITE_STREETS,
+              ),
+            ),
+            // Carousel
+            if (_filteredBuildings.isNotEmpty && _buildingData.isNotEmpty)
+              Container(
+                color: Colors.grey.shade900,
+                child: CarouselSlider.builder(
+                  itemCount: _filteredBuildings.length,
+                  itemBuilder: (context, index, realIndex) {
+                    if (index >= _buildingData.length) return const SizedBox();
+                    return GestureDetector(
+                      onTap: () => _startNavigation(index),
+                      child: carouselCard(
+                        _filteredBuildings[index],
+                        _buildingData[index]['distance'] / 1000, // km
+                        _buildingData[index]['duration'],
+                      ),
+                    );
                   },
+                  options: CarouselOptions(
+                    height: 100,
+                    viewportFraction: 0.85,
+                    initialPage: 0,
+                    enableInfiniteScroll: false,
+                    onPageChanged: _onCarouselPageChanged,
+                  ),
                 ),
               ),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _onFloatingButtonPressed,
-        child: const Icon(Icons.my_location),
+        onPressed: _centerOnUser,
+        backgroundColor: Colors.green.shade700,
+        child: const Icon(Icons.my_location, color: Colors.white),
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(BuildingType? type, String label) {
+    final isSelected = _selectedFilter == type;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: FilterChip(
+        label: Text(label),
+        selected: isSelected,
+        onSelected: (_) => _applyFilter(type),
+        backgroundColor: Colors.green.shade600,
+        selectedColor: Colors.white,
+        labelStyle: TextStyle(
+          color: isSelected ? Colors.green.shade700 : Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
+        ),
+        checkmarkColor: Colors.green.shade700,
+        padding: const EdgeInsets.symmetric(horizontal: 4),
       ),
     );
   }

@@ -1,83 +1,79 @@
-# geocoder2
+# Campus Guide v2.0 🎓
 
-**Easy forward and reverse geocodeing From google maps api**
-make sure to activate Maps SDK for android and ios and geocode api from  <a href="https://console.cloud.google.com">Google Cloud Console</a> 
+A modern, high-performance Flutter application for university campus navigation. Features interactive maps, turn-by-turn navigation, and detailed building information.
 
-## Features
+## 🚀 Key Features
 
-* Easy To Use
-* No Errors
+### 🗺️ Interactive Map
+- **Satellite View:** High-resolution Mapbox satellite imagery.
+- **Custom Markers:** Color-coded markers by building type (Dept, Amphi, Admin, etc.).
+- **User Tracking:** Real-time GPS location tracking.
 
-## Code Example
-```dart
-import 'package:geocoder2/geocoder2.dart';
+### 🧭 Navigation System
+- **Turn-by-Turn Routing:** Visual route line on map.
+- **Voice Instructions:** Text-to-Speech (TTS) guidance.
+- **Arrival Detection:** Automatic notification when destination reached.
+- **Instant Estimates:** Haversine formula for instant distance/time calculation (No API cost).
+
+### 🏢 Building Directory
+- **Smart Filters:** Filter by Department, Amphitheater, Library, Research, etc.
+- **Search:** Real-time text search for buildings.
+- **Campus Switching:** Instant switching between multiple campuses (Sidi Amar, Bouni, Sidi Achor).
+- **Details:** Images, distance, and walking time estimates.
+
+### ⚡ Performance Optimized
+- **Compressed Assets:** Image sizes reduced by 99% (~7MB → ~60KB).
+- **GPU Fixes:** Optimized for Samsung Exynos devices (Impeller disabled).
+- **Texture Mode:** Enhanced map rendering stability.
+
+---
+
+## 📱 Tech Stack
+
+- **Framework:** Flutter 3.27.1 / Dart 3.6.0
+- **Language:** Kotlin 2.0.0 (Android)
+- **Map SDK:** `mapbox_maps_flutter` v2.5.0
+- **Navigation:** Mapbox Directions API
+- **State Management:** `setState` (Clean & efficient for this scale)
+
+---
+
+## 🛠️ Setup & Installation
+
+### Prerequisites
+- Flutter SDK 3.27+
+- Android Studio / VS Code
+- Mapbox Access Token
+
+### Environment Keys
+Create a `.env` file in the root directory (or use `gradle.properties`):
+```properties
+MAPBOX_ACCESS_TOKEN=pk.eyJ1Ijoi...
+MAPBOX_DOWNLOADS_TOKEN=sk.eyJ1Ijoi...
 ```
 
-## Get Data Form Coordinates
-```dart
-    GeoData data = await Geocoder2.getDataFromCoordinates(
-        latitude: 40.714224,
-        longitude: -73.961452,
-        googleMapApiKey: "GOOGLE_MAP_API_KEY");
-    
-    //Formated Address
-    print(data.address);
-    //City Name
-    print(data.city);
-    //Country Name
-    print(data.country);
-    //Country Code
-    print(data.countryCode);
-    //Latitude
-    print(data.latitude);
-    //Longitude
-    print(data.longitude);
-    //Postal Code
-    print(data.postalCode);
-    //State
-    print(data.state);
-    //Street Number
-    print(data.street_number);
+### Installation
+```bash
+# 1. Clone repository
+git clone https://github.com/yourusername/campus-guide.git
 
-```
-## Get Data From Address
-```dart
-    GeoData data = await Geocoder2.getDataFromAddress(
-        address: "277 Bedford Ave, Brooklyn, NY 11211, USA",
-        googleMapApiKey: "GOOGLE_MAP_API_KEY");
-    
-    //Formated Address
-    print(data.address);
-    //City Name
-    print(data.city);
-    //Country Name
-    print(data.country);
-    //Country Code
-    print(data.countryCode);
-    //Latitude
-    print(data.latitude);
-    //Longitude
-    print(data.longitude);
-    //Postal Code
-    print(data.postalCode);
-    //State
-    print(data.state);
-    //Street Number
-    print(data.street_number);
+# 2. Install dependencies
+flutter pub get
+
+# 3. Run on Android device
+flutter run
 ```
 
-Both methods also have an optional ```language``` parameter to request the results in a specific language.
-Here is the [list of supported language codes](https://developers.google.com/maps/faq#languagesupport).
+---
 
+## 📸 Screenshots
 
-### Note :
-If you don't have GOOGLE_MAP_API_KEY then you will use [*geocoder_buddy*]('https://pub.dev/packages/geocoder_buddy')
-### Alternative
-[Geocoder Buddy]('https://pub.dev/packages/geocoder_buddy')
+| Map View | Navigation | Building List |
+|----------|------------|---------------|
+| ![Map](assets/screenshots/map.jpg) | ![Nav](assets/screenshots/nav.jpg) | ![List](assets/screenshots/list.jpg) |
 
+---
 
-### Buy Me A Coffee
+## 📝 License
 
-<a href="https://www.buymeacoffee.com/flutterbuddy">
-<img src="https://www.buymeacoffee.com/assets/img/guidelines/download-assets-1.svg" height="50" target="_flutterbuddy">
-</a>
+© 2024 University Annaba. All Rights Reserved.

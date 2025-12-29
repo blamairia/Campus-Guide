@@ -1,68 +1,45 @@
 import 'dart:convert';
 
-import 'package:mapbox_gl/mapbox_gl.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:ubmap/main.dart';
 
-LatLng getLatLngFromSharedPrefs() {
-  return LatLng(sharedPreferences.getDouble('latitude')!,
-      sharedPreferences.getDouble('longitude')!);
+mapbox.Position getPositionFromSharedPrefs() {
+  final lat = sharedPreferences.getDouble('latitude') ?? 36.812;
+  final lng = sharedPreferences.getDouble('longitude') ?? 7.718;
+  return mapbox.Position(lng, lat);
+}
+
+void saveUserLocation(double lat, double lng) {
+  sharedPreferences.setDouble('latitude', lat);
+  sharedPreferences.setDouble('longitude', lng);
 }
 
 Map getDecodedResponseFromSharedPrefs(int index) {
-  String key = 'restaurant--$index';
-  Map response = json.decode(sharedPreferences.getString(key)!);
-  return response;
+  String key = 'building--$index';
+  final stored = sharedPreferences.getString(key);
+  if (stored == null) return {};
+  return json.decode(stored);
 }
 
 num getDistanceFromSharedPrefs(int index) {
-  num distance = getDecodedResponseFromSharedPrefs(index)['distance'];
-  return distance;
+  final response = getDecodedResponseFromSharedPrefs(index);
+  return response['distance'] ?? 0;
 }
 
 num getDurationFromSharedPrefs(int index) {
-  num duration = getDecodedResponseFromSharedPrefs(index)['duration'];
-  return duration;
+  final response = getDecodedResponseFromSharedPrefs(index);
+  return response['duration'] ?? 0;
 }
 
 Map getGeometryFromSharedPrefs(int index) {
-  Map geometry = getDecodedResponseFromSharedPrefs(index)['geometry'];
-  return geometry;
+  final response = getDecodedResponseFromSharedPrefs(index);
+  return response['geometry'] ?? {};
 }
 
-LatLng getCurrentLatLngFromSharedPrefs() {
-  return LatLng(sharedPreferences.getDouble('latitude')!,
-      sharedPreferences.getDouble('longitude')!);
+mapbox.Position getCurrentPositionFromSharedPrefs() {
+  return getPositionFromSharedPrefs();
 }
 
 String getCurrentAddressFromSharedPrefs() {
-  return sharedPreferences.getString('current-address')!;
-}
-
-LatLng getTripLatLngFromSharedPrefs(String type) {
-  List sourceLocationList =
-      json.decode(sharedPreferences.getString('source')!)['location'];
-  List destinationLocationList =
-      json.decode(sharedPreferences.getString('destination')!)['location'];
-  LatLng source = LatLng(sourceLocationList[0], sourceLocationList[1]);
-  LatLng destination =
-      LatLng(destinationLocationList[0], destinationLocationList[1]);
-
-  if (type == 'source') {
-    return source;
-  } else {
-    return destination;
-  }
-}
-
-String getSourceAndDestinationPlaceText(String type) {
-  String sourceAddress =
-      json.decode(sharedPreferences.getString('source')!)['name'];
-  String destinationAddress =
-      json.decode(sharedPreferences.getString('destination')!)['name'];
-
-  if (type == 'source') {
-    return sourceAddress;
-  } else {
-    return destinationAddress;
-  }
+  return sharedPreferences.getString('current-address') ?? '';
 }

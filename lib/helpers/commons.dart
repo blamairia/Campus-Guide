@@ -1,8 +1,13 @@
-import 'package:mapbox_gl/mapbox_gl.dart';
-
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import '../constants/buildings.dart';
 
-LatLng getLatLngFromDepartmentData(int index) {
-  return LatLng(double.parse(buildings[index]['coordinates']['latitude']),
-      double.parse(buildings[index]['coordinates']['longitude']));
+mapbox.Position getPositionFromBuildingData(int index) {
+  final building = buildings[index];
+  final lat = double.parse(building['coordinates']['latitude'].toString().trim());
+  final lng = double.parse(building['coordinates']['longitude'].toString().trim());
+  return mapbox.Position(lng, lat);
+}
+
+mapbox.Point getPointFromBuildingData(int index) {
+  return mapbox.Point(coordinates: getPositionFromBuildingData(index));
 }
