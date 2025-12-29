@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Mapbox token loaded from gradle.properties or environment -->
-    <string name="mapbox_access_token">YOUR_MAPBOX_TOKEN</string>
+    <!-- Mapbox token is injected from gradle.properties via build.gradle resValue -->
 </resources>
