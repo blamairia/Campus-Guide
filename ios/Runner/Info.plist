@@ -25,7 +25,7 @@
 		<key>LSRequiresIPhoneOS</key>
 		<true/>
 		<key>MGLMapboxAccessToken</key>
-		<string>pk.eyJ1IjoiYmxhbWFpcmlhIiwiYSI6ImNsaHYxaDFhdzA1Z2Iza3BjOG53enhtdjAifQ.HW5SGmGoYH_47pO1lIRGzQ</string>
+		<string>YOUR_MAPBOX_TOKEN</string>
 		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 		<string>Helps improve Open Street Maps</string>
 		<key>NSLocationAlwaysUsageDescription</key>

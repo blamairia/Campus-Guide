@@ -1,15 +1,41 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:geolocator/geolocator.dart';
 import '../models/navigation_models.dart';
+import 'routing_provider.dart';
+import 'mapbox_routing_provider.dart';
+import 'ors_routing_provider.dart';
 
+/// Navigation service with pluggable routing provider support
+/// Supports: Mapbox (default), OpenRouteService
 class NavigationService {
-  final Dio _dio = Dio();
-  final String _baseUrl = 'https://api.mapbox.com/directions/v5/mapbox';
+  late final RoutingProvider _routingProvider;
   
-  String get _accessToken => dotenv.env['MAPBOX_ACCESS_TOKEN'] ?? '';
+  NavigationService({RoutingProvider? provider}) {
+    if (provider != null) {
+      _routingProvider = provider;
+    } else {
+      // Auto-select based on env config
+      final providerName = dotenv.env['ROUTING_PROVIDER']?.toLowerCase() ?? 'mapbox';
+      _routingProvider = _createProvider(providerName);
+    }
+  }
+  
+  /// Create provider by name
+  RoutingProvider _createProvider(String name) {
+    switch (name) {
+      case 'ors':
+      case 'openrouteservice':
+        return ORSRoutingProvider();
+      case 'mapbox':
+      default:
+        return MapboxRoutingProvider();
+    }
+  }
+  
+  /// Get current provider name
+  String get providerName => _routingProvider.name;
 
-  /// Fetches a route from Mapbox Directions API
+  /// Fetches a route using the configured provider
   Future<NavigationRoute?> getRoute({
     required double startLat,
     required double startLng,
@@ -17,27 +43,48 @@ class NavigationService {
     required double endLng,
     String profile = 'walking',
   }) async {
-    final url = '$_baseUrl/$profile/$startLng,$startLat;$endLng,$endLat'
-        '?alternatives=false'
-        '&annotations=distance,duration'
-        '&geometries=geojson'
-        '&language=en'
-        '&overview=full'
-        '&steps=true'
-        '&voice_instructions=true'
-        '&banner_instructions=true'
-        '&access_token=$_accessToken';
-
-    try {
-      final response = await _dio.get(url);
-      if (response.data['routes'] != null && 
-          (response.data['routes'] as List).isNotEmpty) {
-        return NavigationRoute.fromJson(response.data['routes'][0]);
-      }
-    } catch (e) {
-      print('Error fetching route: $e');
-    }
-    return null;
+    return _routingProvider.getRoute(
+      startLat: startLat,
+      startLng: startLng,
+      endLat: endLat,
+      endLng: endLng,
+      profile: profile,
+    );
+  }
+  
+  /// Fetches route with fallback to alternate provider
+  Future<NavigationRoute?> getRouteWithFallback({
+    required double startLat,
+    required double startLng,
+    required double endLat,
+    required double endLng,
+    String profile = 'walking',
+  }) async {
+    // Try primary provider
+    var route = await getRoute(
+      startLat: startLat,
+      startLng: startLng,
+      endLat: endLat,
+      endLng: endLng,
+      profile: profile,
+    );
+    
+    if (route != null) return route;
+    
+    // Fallback to alternate provider
+    final fallbackProvider = _routingProvider is MapboxRoutingProvider
+        ? ORSRoutingProvider()
+        : MapboxRoutingProvider();
+    
+    print('[Navigation] Primary failed, trying ${fallbackProvider.name}');
+    
+    return fallbackProvider.getRoute(
+      startLat: startLat,
+      startLng: startLng,
+      endLat: endLat,
+      endLng: endLng,
+      profile: profile,
+    );
   }
 
   /// Start streaming location updates
