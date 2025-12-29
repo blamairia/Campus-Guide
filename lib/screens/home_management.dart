@@ -37,22 +37,33 @@ class _HomeManagementState extends State<HomeManagement> {
     _currentBuildings = widget.buildings;
   }
 
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   void _switchCampus(int index) {
     setState(() {
       _campusIndex = index;
       _currentBuildings = campusList[index];
     });
-    Navigator.pop(context); // Close drawer
+    // Close using pop if it was opened via standard navigation, or try scaffold key
+    if (_scaffoldKey.currentState?.isDrawerOpen ?? false) {
+      _scaffoldKey.currentState?.closeDrawer();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Pass callback to open drawer
     final pages = [
-      UniversityMap(key: ValueKey(_campusIndex), buildings: _currentBuildings),
+      UniversityMap(
+        key: ValueKey(_campusIndex),
+        buildings: _currentBuildings,
+        onMenuPressed: () => _scaffoldKey.currentState?.openDrawer(),
+      ),
       buildingsTable(buildings: _currentBuildings),
     ];
 
     return Scaffold(
+      key: _scaffoldKey,
       drawer: Drawer(
         child: SafeArea(
           child: Column(

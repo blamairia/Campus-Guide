@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:geolocator/geolocator.dart' as geo;
@@ -35,9 +37,9 @@ class _NavigationScreenState extends State<NavigationScreen> {
   int _currentStepIndex = 0;
   double _distanceRemaining = 0;
   double _durationRemaining = 0;
-  bool _isNavigating = false;
   bool _isLoading = true;
   String _currentInstruction = "Calculating route...";
+  String _selectedProfile = 'walking'; // walking, cycling, driving
 
   @override
   void initState() {
@@ -53,13 +55,23 @@ class _NavigationScreenState extends State<NavigationScreen> {
   }
 
   Future<void> _startNavigation() async {
+    setState(() {
+      _isLoading = true;
+      _currentInstruction = "Calculating ${_selectedProfile} route...";
+    });
+
     // Get current position
-    final position = await _navigationService.getCurrentPosition();
+    geo.Position? position = _currentPosition;
+    if (position == null) {
+      position = await _navigationService.getCurrentPosition();
+    }
+
     if (position == null) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not get location. Please enable GPS.')),
-        );
+        setState(() {
+          _isLoading = false;
+          _currentInstruction = "Could not get location.";
+        });
       }
       return;
     }
@@ -68,12 +80,16 @@ class _NavigationScreenState extends State<NavigationScreen> {
       _currentPosition = position;
     });
 
-    // Fetch route
+    // Update puck for the selected profile
+    _updateLocationPuck();
+
+    // Fetch route with selected profile
     final route = await _navigationService.getRoute(
       startLat: position.latitude,
       startLng: position.longitude,
       endLat: widget.destinationLat,
       endLng: widget.destinationLng,
+      profile: _modeToProfile(_selectedProfile),
     );
 
     if (route != null && mounted) {
@@ -84,8 +100,8 @@ class _NavigationScreenState extends State<NavigationScreen> {
         _currentInstruction = route.steps.isNotEmpty 
             ? route.steps[0].instruction 
             : "Head towards ${widget.destinationName}";
-        _isNavigating = true;
         _isLoading = false;
+        _currentStepIndex = 0;
       });
 
       // Speak first instruction
@@ -94,16 +110,119 @@ class _NavigationScreenState extends State<NavigationScreen> {
       // Draw route on map after a short delay
       Future.delayed(const Duration(milliseconds: 500), () {
         _drawRouteOnMap();
+        _fitRouteBounds();
       });
 
-      // Start location tracking
-      _locationSubscription = _navigationService.startLocationTracking().listen(_onLocationUpdate);
+      // Start location tracking if not already started
+      if (_locationSubscription == null) {
+        _locationSubscription = _navigationService.startLocationTracking().listen(_onLocationUpdate);
+      }
     } else {
-      setState(() {
-        _isLoading = false;
-        _currentInstruction = "Could not calculate route";
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _currentInstruction = "Could not calculate route";
+        });
+      }
     }
+  }
+
+  String _modeToProfile(String mode) {
+    if (mode == 'driving') return 'driving';
+    if (mode == 'cycling') return 'cycling';
+    return 'walking';
+  }
+
+  Future<void> _updateLocationPuck() async {
+    if (_mapboxMap == null) return;
+
+    String? modelAsset;
+    List<double> scale = [1.0, 1.0, 1.0];
+    
+    switch (_selectedProfile) {
+      case 'driving':
+        modelAsset = "assets/models/car.glb";
+        scale = [5.0, 5.0, 5.0]; // Adjust scale as needed for your specific 3D model
+        break;
+      case 'cycling':
+        modelAsset = "assets/models/bike.glb";
+        scale = [2.0, 2.0, 2.0];
+        break;
+      case 'walking':
+      default:
+        modelAsset = "assets/models/person.glb";
+        scale = [2.0, 2.0, 2.0];
+        break;
+    }
+
+    try {
+      // Create URI based on platform
+      String uri = "asset://$modelAsset";
+      if (Theme.of(context).platform == TargetPlatform.android) {
+        // Android often requires this prefix for assets in plugins
+        uri = "asset://flutter_assets/$modelAsset";
+      }
+
+      _mapboxMap?.location.updateSettings(
+        mapbox.LocationComponentSettings(
+          enabled: true,
+          pulsingEnabled: true,
+          pulsingColor: Colors.blue.value,
+          locationPuck: mapbox.LocationPuck(
+            locationPuck3D: mapbox.LocationPuck3D(
+              modelUri: uri,
+              modelScale: scale,
+              modelRotation: [0.0, 0.0, 90.0], // Adjust rotation if models face wrong way
+            ),
+          ),
+        ),
+      );
+    } catch (e) {
+      print("Error updating location puck: $e");
+    }
+  }
+
+  Future<Uint8List> _createPuckImage(IconData icon, Color color) async {
+    final pictureRecorder = ui.PictureRecorder();
+    final canvas = Canvas(pictureRecorder);
+    final size = const Size(128, 128);
+    
+    // Draw background circle
+    final paint = Paint()..color = Colors.white;
+    canvas.drawCircle(Offset(size.width / 2, size.height / 2), 60, paint);
+    
+    // Draw border
+    paint
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 8;
+    canvas.drawCircle(Offset(size.width / 2, size.height / 2), 60, paint);
+
+    // Draw Icon using TextPainter
+    final textPainter = TextPainter(
+      textDirection: TextDirection.ltr,
+      textAlign: TextAlign.center,
+    );
+
+    textPainter.text = TextSpan(
+      text: String.fromCharCode(icon.codePoint),
+      style: TextStyle(
+        fontSize: 80,
+        fontFamily: icon.fontFamily,
+        color: color,
+      ),
+    );
+
+    textPainter.layout();
+    textPainter.paint(
+      canvas,
+      Offset((size.width - textPainter.width) / 2, (size.height - textPainter.height) / 2),
+    );
+
+    final picture = pictureRecorder.endRecording();
+    final image = await picture.toImage(size.width.toInt(), size.height.toInt());
+    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    return byteData!.buffer.asUint8List();
   }
 
   void _onLocationUpdate(geo.Position position) {
@@ -115,19 +234,27 @@ class _NavigationScreenState extends State<NavigationScreen> {
 
     if (_route == null) return;
 
-    // Update camera to follow user with bearing
-    _mapboxMap?.flyTo(
-      mapbox.CameraOptions(
-        center: mapbox.Point(coordinates: mapbox.Position(position.longitude, position.latitude)),
-        zoom: 18,
-        bearing: position.heading,
-        pitch: 60,
-      ),
-      mapbox.MapAnimationOptions(duration: 1000),
-    );
-
-    // Check if we need to advance to next step
+    // Advance progress
     _updateNavigationProgress(position);
+  }
+
+  void _recenterCamera() {
+    if (_currentPosition != null && _mapboxMap != null) {
+      _mapboxMap?.flyTo(
+        mapbox.CameraOptions(
+          center: mapbox.Point(coordinates: mapbox.Position(_currentPosition!.longitude, _currentPosition!.latitude)),
+          zoom: 17,
+          bearing: _currentPosition!.heading,
+          pitch: 60,
+        ),
+        mapbox.MapAnimationOptions(duration: 800),
+      );
+    }
+  }
+
+  void _fitRouteBounds() {
+    if (_route == null || _mapboxMap == null) return;
+    _recenterCamera();
   }
 
   void _updateNavigationProgress(geo.Position position) {
@@ -141,8 +268,8 @@ class _NavigationScreenState extends State<NavigationScreen> {
       widget.destinationLng,
     );
 
-    // Check if arrived (within 30 meters)
-    if (distanceToDestination < 30) {
+    // Check if arrived (within 20 meters)
+    if (distanceToDestination < 20) {
       _onArrival();
       return;
     }
@@ -173,7 +300,12 @@ class _NavigationScreenState extends State<NavigationScreen> {
 
     setState(() {
       _distanceRemaining = distanceToDestination;
-      _durationRemaining = distanceToDestination / 1.4; // Approx walking speed
+      // Adjust duration estimate based on mode roughly
+      double speed = 1.4; // walking m/s
+      if (_selectedProfile == 'cycling') speed = 5.0;
+      if (_selectedProfile == 'driving') speed = 10.0;
+      
+      _durationRemaining = distanceToDestination / speed;
     });
   }
 
@@ -226,7 +358,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
         await _mapboxMap!.style.removeStyleLayer("route-layer");
         await _mapboxMap!.style.removeStyleSource("route-source");
       } catch (e) {
-        // Source doesn't exist, which is fine
+        // Source doesn't exist
       }
 
       await _mapboxMap!.style.addSource(
@@ -250,21 +382,8 @@ class _NavigationScreenState extends State<NavigationScreen> {
 
   void _onMapCreated(mapbox.MapboxMap mapboxMap) {
     _mapboxMap = mapboxMap;
-    
-    // Center on current position or destination
-    if (_currentPosition != null) {
-      mapboxMap.flyTo(
-        mapbox.CameraOptions(
-          center: mapbox.Point(coordinates: mapbox.Position(
-            _currentPosition!.longitude,
-            _currentPosition!.latitude,
-          )),
-          zoom: 16,
-          pitch: 45,
-        ),
-        mapbox.MapAnimationOptions(duration: 1000),
-      );
-    }
+    // Initial update
+    _updateLocationPuck();
   }
 
   void _onStyleLoaded(mapbox.StyleLoadedEventData data) {
@@ -278,6 +397,14 @@ class _NavigationScreenState extends State<NavigationScreen> {
     _locationSubscription?.cancel();
     _tts.stop();
     super.dispose();
+  }
+
+  void _changeProfile(String newProfile) {
+    if (_selectedProfile == newProfile) return;
+    setState(() {
+      _selectedProfile = newProfile;
+    });
+    _startNavigation(); // Refetch route
   }
 
   @override
@@ -301,49 +428,27 @@ class _NavigationScreenState extends State<NavigationScreen> {
             styleUri: mapbox.MapboxStyles.MAPBOX_STREETS,
           ),
 
-          // Loading indicator
-          if (_isLoading)
-            Container(
-              color: Colors.black54,
-              child: const Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(color: Colors.white),
-                    SizedBox(height: 16),
-                    Text(
-                      'Calculating route...',
-                      style: TextStyle(color: Colors.white, fontSize: 16),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-          // Navigation instruction banner
+          // Top Panel: Instruction + Transport Modes
           Positioned(
             top: 0,
             left: 0,
             right: 0,
             child: SafeArea(
-              child: Container(
-                margin: const EdgeInsets.all(16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.green.shade700,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
-                      blurRadius: 10,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Instruction Card
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade700,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 4))
+                      ],
                     ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
+                    child: Row(
                       children: [
                         _getManeuverIcon(),
                         const SizedBox(width: 12),
@@ -359,21 +464,78 @@ class _NavigationScreenState extends State<NavigationScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      "To: ${widget.destinationName}",
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
-                        fontSize: 14,
-                      ),
+                  ),
+
+                  // Mode Selector
+                  Container(
+                    height: 40,
+                    margin: const EdgeInsets.symmetric(horizontal: 40),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                         BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))
+                      ]
                     ),
-                  ],
-                ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildModeButton(Icons.directions_walk, 'walking'),
+                        _buildModeButton(Icons.directions_bike, 'cycling'),
+                        _buildModeButton(Icons.directions_car, 'driving'),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
 
-          // Bottom info panel
+          // Map Control Buttons (Recenter / Overview)
+          Positioned(
+            right: 16,
+            bottom: 180, // Above the bottom panel
+            child: Column(
+              children: [
+                FloatingActionButton.small(
+                  heroTag: 'overview_btn',
+                  backgroundColor: Colors.white,
+                  child: const Icon(Icons.map, color: Colors.blueGrey),
+                  onPressed: () {
+                     _mapboxMap?.flyTo(
+                       mapbox.CameraOptions(
+                         center: mapbox.Point(coordinates: mapbox.Position(widget.destinationLng, widget.destinationLat)),
+                         zoom: 14,
+                         pitch: 0,
+                         bearing: 0,
+                       ),
+                       mapbox.MapAnimationOptions(duration: 500)
+                     );
+                  },
+                ),
+                const SizedBox(height: 8),
+                FloatingActionButton.small(
+                  heroTag: 'recenter_btn',
+                  backgroundColor: Colors.white,
+                  child: const Icon(Icons.my_location, color: Colors.blue),
+                  onPressed: _recenterCamera,
+                ),
+              ],
+            ),
+          ),
+
+          // Loading overlay
+          if (_isLoading)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black54,
+                child: const Center(
+                  child: CircularProgressIndicator(color: Colors.white),
+                ),
+              ),
+            ),
+
+          // Bottom Info Panel
           Positioned(
             bottom: 0,
             left: 0,
@@ -384,11 +546,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
                 color: Colors.white,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                 boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, -5),
-                  ),
+                  BoxShadow(color: Colors.black12, blurRadius: 10, offset: const Offset(0, -5)),
                 ],
               ),
               child: SafeArea(
@@ -422,6 +580,25 @@ class _NavigationScreenState extends State<NavigationScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildModeButton(IconData icon, String mode) {
+    final isSelected = _selectedProfile == mode;
+    return GestureDetector(
+      onTap: () => _changeProfile(mode),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.green.shade100 : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Icon(
+          icon,
+          color: isSelected ? Colors.green.shade800 : Colors.grey,
+          size: 20,
+        ),
       ),
     );
   }
