@@ -27,3 +27,6 @@
 .dart_tool/
 .packages
 build/
+
+# Gradle properties with secrets
+android/gradle.properties
