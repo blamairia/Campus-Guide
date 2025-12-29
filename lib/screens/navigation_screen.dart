@@ -136,49 +136,41 @@ class _NavigationScreenState extends State<NavigationScreen> {
   Future<void> _updateLocationPuck() async {
     if (_mapboxMap == null) return;
 
-    String? modelAsset;
-    List<double> scale = [1.0, 1.0, 1.0];
+    // Google Maps-style location puck:
+    // - Blue dot with white border
+    // - Pulsing ring effect
+    // - Accuracy ring showing GPS precision
+    // - Bearing cone showing direction
     
-    switch (_selectedProfile) {
-      case 'driving':
-        modelAsset = "assets/models/car.glb";
-        scale = [5.0, 5.0, 5.0]; // Adjust scale as needed for your specific 3D model
-        break;
-      case 'cycling':
-        modelAsset = "assets/models/bike.glb";
-        scale = [2.0, 2.0, 2.0];
-        break;
-      case 'walking':
-      default:
-        modelAsset = "assets/models/person.glb";
-        scale = [2.0, 2.0, 2.0];
-        break;
-    }
-
+    const int googleBlue = 0xFF4285F4; // Google's signature blue
+    const int googleBluePulse = 0xFF8AB4F8; // Lighter blue for pulse
+    const int googleBlueLight = 0x334285F4; // Transparent blue for accuracy
+    
     try {
-      // Create URI based on platform
-      String uri = "asset://$modelAsset";
-      if (Theme.of(context).platform == TargetPlatform.android) {
-        // Android often requires this prefix for assets in plugins
-        uri = "asset://flutter_assets/$modelAsset";
-      }
-
-      _mapboxMap?.location.updateSettings(
+      await _mapboxMap?.location.updateSettings(
         mapbox.LocationComponentSettings(
           enabled: true,
+          
+          // Pulsing effect (the expanding ring animation)
           pulsingEnabled: true,
-          pulsingColor: Colors.blue.value,
-          locationPuck: mapbox.LocationPuck(
-            locationPuck3D: mapbox.LocationPuck3D(
-              modelUri: uri,
-              modelScale: scale,
-              modelRotation: [0.0, 0.0, 90.0], // Adjust rotation if models face wrong way
-            ),
-          ),
+          pulsingColor: googleBluePulse,
+          pulsingMaxRadius: 80.0,
+          
+          // Accuracy ring (shows GPS precision)
+          showAccuracyRing: true,
+          accuracyRingColor: googleBlueLight,
+          accuracyRingBorderColor: googleBlue,
+          
+          // Bearing (direction cone/arrow)
+          puckBearingEnabled: true,
+          puckBearing: mapbox.PuckBearing.HEADING,
+          
+          // Use default Mapbox 2D puck (clean blue dot like Google)
+          // No custom image = uses Mapbox's built-in blue dot
         ),
       );
     } catch (e) {
-      print("Error updating location puck: $e");
+      print("Error setting location puck: $e");
     }
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ubmap/constants/app_theme.dart';
 import 'package:ubmap/constants/buildings.dart';
 import 'package:ubmap/screens/university_map.dart';
 import 'package:ubmap/screens/university_table.dart';
@@ -59,54 +60,69 @@ class _HomeManagementState extends State<HomeManagement> {
         buildings: _currentBuildings,
         onMenuPressed: () => _scaffoldKey.currentState?.openDrawer(),
       ),
-      buildingsTable(buildings: _currentBuildings),
+      BuildingsTable(buildings: _currentBuildings),
     ];
 
     return Scaffold(
       key: _scaffoldKey,
       drawer: Drawer(
+        backgroundColor: AppTheme.bgSurface,
         child: SafeArea(
           child: Column(
             children: [
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                color: Colors.green.shade700,
+                padding: const EdgeInsets.all(AppTheme.spacingXl),
+                decoration: const BoxDecoration(
+                  color: AppTheme.primary,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.school, size: 48, color: Colors.white),
-                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(AppTheme.spacingMd),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: AppTheme.borderRadiusMd,
+                      ),
+                      child: const Icon(
+                        Icons.school,
+                        size: 32,
+                        color: AppTheme.textOnPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: AppTheme.spacingMd),
                     const Text(
                       'Campus Guide',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppTheme.textOnPrimary,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppTheme.spacingXs),
                     Text(
                       campusNames[_campusIndex],
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
+                        color: AppTheme.textOnPrimary.withOpacity(0.9),
                         fontSize: 14,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 8),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              const SizedBox(height: AppTheme.spacingSm),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppTheme.spacingLg,
+                  vertical: AppTheme.spacingSm,
+                ),
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
                     'SWITCH CAMPUS',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
+                    style: AppTheme.labelSmall.copyWith(
+                      color: AppTheme.textHint,
                       letterSpacing: 1,
                     ),
                   ),
@@ -117,25 +133,28 @@ class _HomeManagementState extends State<HomeManagement> {
                 return ListTile(
                   leading: Icon(
                     Icons.location_city,
-                    color: isSelected ? Colors.green : Colors.grey,
+                    color: isSelected ? AppTheme.primary : AppTheme.textHint,
                   ),
                   title: Text(
                     campusNames[index],
                     style: TextStyle(
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      color: isSelected ? Colors.green : null,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      color: isSelected ? AppTheme.primary : AppTheme.textPrimary,
                     ),
                   ),
                   trailing: isSelected
-                      ? const Icon(Icons.check, color: Colors.green)
+                      ? const Icon(Icons.check_circle, color: AppTheme.primary)
                       : null,
                   onTap: () => _switchCampus(index),
                 );
               }),
-              const Divider(),
+              const Divider(color: AppTheme.divider),
               ListTile(
-                leading: const Icon(Icons.info_outline),
-                title: const Text('About'),
+                leading: const Icon(Icons.info_outline, color: AppTheme.textSecondary),
+                title: Text(
+                  'About',
+                  style: AppTheme.bodyLarge.copyWith(color: AppTheme.textPrimary),
+                ),
                 onTap: () {
                   Navigator.pop(context);
                   showAboutDialog(
@@ -161,14 +180,18 @@ class _HomeManagementState extends State<HomeManagement> {
           });
         },
         currentIndex: _pageIndex,
-        selectedItemColor: Colors.green.shade700,
+        backgroundColor: AppTheme.bgSurface,
+        selectedItemColor: AppTheme.primary,
+        unselectedItemColor: AppTheme.textHint,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.map),
+            icon: Icon(Icons.map_outlined),
+            activeIcon: Icon(Icons.map),
             label: 'Map',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.list),
+            icon: Icon(Icons.list_outlined),
+            activeIcon: Icon(Icons.list),
             label: 'Buildings',
           ),
         ],
