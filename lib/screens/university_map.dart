@@ -10,8 +10,14 @@ import 'package:ubmap/screens/navigation_screen.dart';
 import 'package:ubmap/services/navigation_service.dart';
 
 class UniversityMap extends StatefulWidget {
-  const UniversityMap({super.key, required this.buildings});
+  const UniversityMap({
+    super.key, 
+    required this.buildings, 
+    this.onMenuPressed,
+  });
+  
   final List<Map> buildings;
+  final VoidCallback? onMenuPressed;
 
   @override
   State<UniversityMap> createState() => _UniversityMapState();
@@ -120,15 +126,21 @@ class _UniversityMapState extends State<UniversityMap> {
   void _onMapCreated(mapbox.MapboxMap mapboxMap) async {
     _mapboxMap = mapboxMap;
     
-    // Create circle annotation manager for markers
+    // Create circle annotation manager for markers FIRST
     _circleAnnotationManager = await mapboxMap.annotations.createCircleAnnotationManager();
+    
+    // Add markers immediately after manager is ready
+    await _addBuildingMarkers();
   }
 
   void _onStyleLoaded(mapbox.StyleLoadedEventData data) async {
     if (_mapboxMap == null) return;
     
-    // Add building markers
-    await _addBuildingMarkers();
+    // We don't rely only on this for markers anymore because manager might not be ready
+    // But we can re-add if needed, checking for manager existence
+    if (_circleAnnotationManager != null) {
+       await _addBuildingMarkers();
+    }
     
     // Enable location component
     _mapboxMap!.location.updateSettings(mapbox.LocationComponentSettings(
@@ -230,6 +242,10 @@ class _UniversityMapState extends State<UniversityMap> {
     
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: widget.onMenuPressed,
+        ),
         title: const Text('Campus Map'),
         backgroundColor: Colors.green.shade700,
         foregroundColor: Colors.white,
