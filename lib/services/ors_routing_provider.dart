@@ -44,6 +44,11 @@ class ORSRoutingProvider implements RoutingProvider {
     final mappedProfile = mapProfile(profile);
     final url = '$_baseUrl/$mappedProfile/geojson';
 
+    print('[$name] Requesting route: ($startLat, $startLng) -> ($endLat, $endLng)');
+    print('[$name] URL: $url');
+    print('[$name] Profile: $mappedProfile');
+    print('[$name] API Key: ${_apiKey.isNotEmpty ? "SET (${_apiKey.length} chars)" : "MISSING!"}');
+
     try {
       final response = await _dio.post(
         url,
@@ -63,10 +68,28 @@ class ORSRoutingProvider implements RoutingProvider {
         },
       );
 
-      if (response.data['features'] != null &&
-          (response.data['features'] as List).isNotEmpty) {
-        return _parseORSResponse(response.data);
+      print('[$name] Response status: ${response.statusCode}');
+      print('[$name] Response type: ${response.data.runtimeType}');
+      
+      if (response.data is Map) {
+        final data = response.data as Map<String, dynamic>;
+        print('[$name] Has features: ${data.containsKey('features')}');
+        
+        if (data['features'] != null) {
+          final features = data['features'] as List;
+          print('[$name] Features count: ${features.length}');
+          
+          if (features.isNotEmpty) {
+            return _parseORSResponse(data);
+          }
+        } else if (data['error'] != null) {
+          print('[$name] API Error: ${data['error']}');
+        }
       }
+    } on DioException catch (e) {
+      print('[$name] DioException: ${e.type}');
+      print('[$name] Status: ${e.response?.statusCode}');
+      print('[$name] Response: ${e.response?.data}');
     } catch (e) {
       print('[$name] Error fetching route: $e');
     }
@@ -80,6 +103,20 @@ class ORSRoutingProvider implements RoutingProvider {
       final properties = feature['properties'];
       final geometry = feature['geometry'];
       final segments = properties['segments'] as List?;
+      
+      // Parse route geometry coordinates
+      final rawCoords = geometry['coordinates'] as List? ?? [];
+      final routeGeometry = <List<double>>[];
+      for (final coord in rawCoords) {
+        if (coord is List && coord.length >= 2) {
+          routeGeometry.add([
+            (coord[0] as num).toDouble(),
+            (coord[1] as num).toDouble(),
+          ]);
+        }
+      }
+      
+      print('[ORS] Route has ${routeGeometry.length} coordinates');
 
       // Build steps from segments
       final steps = <NavigationStep>[];
@@ -93,16 +130,9 @@ class ORSRoutingProvider implements RoutingProvider {
             final endIdx = wayPoints.length > 1 ? wayPoints[1] as int : startIdx;
             
             // Extract step geometry from route coordinates
-            final routeCoords = geometry['coordinates'] as List? ?? [];
             final stepGeometry = <List<double>>[];
-            for (var i = startIdx; i <= endIdx && i < routeCoords.length; i++) {
-              final coord = routeCoords[i];
-              if (coord is List && coord.length >= 2) {
-                stepGeometry.add([
-                  (coord[0] as num).toDouble(),
-                  (coord[1] as num).toDouble(),
-                ]);
-              }
+            for (var i = startIdx; i <= endIdx && i < routeGeometry.length; i++) {
+              stepGeometry.add(routeGeometry[i]);
             }
             
             steps.add(NavigationStep(
@@ -115,15 +145,21 @@ class ORSRoutingProvider implements RoutingProvider {
           }
         }
       }
+      
+      print('[ORS] Parsed ${steps.length} navigation steps');
 
-      return NavigationRoute(
+      final route = NavigationRoute(
         distance: (properties['summary']?['distance'] ?? 0).toDouble(),
         duration: (properties['summary']?['duration'] ?? 0).toDouble(),
-        geometry: geometry['coordinates'] ?? [],
+        geometry: routeGeometry,
         steps: steps,
       );
-    } catch (e) {
+      
+      print('[ORS] Route: ${route.distance}m, ${route.duration}s');
+      return route;
+    } catch (e, stackTrace) {
       print('[ORS] Error parsing response: $e');
+      print('[ORS] Stack: $stackTrace');
       return null;
     }
   }
