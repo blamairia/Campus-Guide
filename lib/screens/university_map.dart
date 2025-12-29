@@ -2,7 +2,9 @@ import 'dart:convert';
 
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
+import 'package:ubmap/constants/app_theme.dart';
 import 'package:ubmap/constants/buildings.dart';
 import 'package:ubmap/helpers/distance_utils.dart';
 import 'package:ubmap/widgets/carousel_card.dart';
@@ -150,6 +152,129 @@ class _UniversityMapState extends State<UniversityMap> {
   }
 
   Future<void> _addBuildingMarkers() async {
+    if (_mapboxMap == null) return;
+    
+    try {
+      // Remove existing markers layer and source
+      try {
+        await _mapboxMap!.style.removeStyleLayer("building-markers-layer");
+        await _mapboxMap!.style.removeStyleSource("building-markers-source");
+      } catch (e) {
+        // Layer/source doesn't exist yet
+      }
+      
+      // Create GeoJSON features for all buildings with color property
+      final features = <Map<String, dynamic>>[];
+      
+      for (int i = 0; i < _filteredBuildings.length; i++) {
+        final building = _filteredBuildings[i];
+        final lat = double.parse(building['coordinates']['latitude'].toString().trim());
+        final lng = double.parse(building['coordinates']['longitude'].toString().trim());
+        
+        // Get color based on type
+        String colorHex = "#EF4444"; // Default red
+        final type = building['type'] as BuildingType?;
+        switch (type) {
+          case BuildingType.department:
+            colorHex = "#1976D2"; // Blue
+            break;
+          case BuildingType.amphitheatre:
+            colorHex = "#7B1FA2"; // Purple
+            break;
+          case BuildingType.library:
+            colorHex = "#2E7D32"; // Green (AppTheme.primary)
+            break;
+          case BuildingType.admin:
+            colorHex = "#F57C00"; // Orange
+            break;
+          case BuildingType.bloc:
+            colorHex = "#00796B"; // Teal
+            break;
+          case BuildingType.research:
+            colorHex = "#303F9F"; // Indigo
+            break;
+          default:
+            colorHex = "#EF4444"; // Red
+        }
+        
+        features.add({
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [lng, lat],
+          },
+          "properties": {
+            "id": building['id'],
+            "name": building['name'],
+            "color": colorHex,
+          },
+        });
+      }
+      
+      final geojsonData = {
+        "type": "FeatureCollection",
+        "features": features,
+      };
+      
+      // Add GeoJSON source
+      await _mapboxMap!.style.addSource(
+        mapbox.GeoJsonSource(
+          id: "building-markers-source",
+          data: jsonEncode(geojsonData),
+        ),
+      );
+      
+      // Add circle layer with basic properties first
+      await _mapboxMap!.style.addLayer(
+        mapbox.CircleLayer(
+          id: "building-markers-layer",
+          sourceId: "building-markers-source",
+          circleRadius: 8.0,
+          circleStrokeColor: Colors.white.value,
+          circleStrokeWidth: 2.0,
+        ),
+      );
+      
+      // Apply zoom-based expression for circle-radius using setStyleLayerProperty
+      // Markers shrink significantly when zoomed out, disappear at very low zoom
+      // Zoom 10 = 0px (invisible), Zoom 12 = 2px (tiny), Zoom 15 = 6px, Zoom 18 = 12px
+      await _mapboxMap!.style.setStyleLayerProperty(
+        "building-markers-layer",
+        "circle-radius",
+        '["interpolate", ["linear"], ["zoom"], 10, 0, 12, 2, 14, 4, 16, 8, 18, 12]',
+      );
+      
+      // Also scale stroke width with zoom
+      await _mapboxMap!.style.setStyleLayerProperty(
+        "building-markers-layer",
+        "circle-stroke-width",
+        '["interpolate", ["linear"], ["zoom"], 10, 0, 12, 0.5, 14, 1, 16, 1.5, 18, 2]',
+      );
+      
+      // Fade out opacity at low zoom levels for cleaner look
+      await _mapboxMap!.style.setStyleLayerProperty(
+        "building-markers-layer",
+        "circle-opacity",
+        '["interpolate", ["linear"], ["zoom"], 10, 0, 12, 0.5, 14, 0.8, 15, 1]',
+      );
+      
+      // Apply data-driven color from the "color" property in GeoJSON
+      await _mapboxMap!.style.setStyleLayerProperty(
+        "building-markers-layer",
+        "circle-color",
+        '["get", "color"]',
+      );
+      
+      print("Markers added with aggressive zoom scaling");
+    } catch (e) {
+      print("Error adding markers with layer: $e");
+      // Fallback to annotation manager if layer approach fails
+      await _addBuildingMarkersWithAnnotations();
+    }
+  }
+  
+  /// Fallback marker implementation using annotations
+  Future<void> _addBuildingMarkersWithAnnotations() async {
     if (_circleAnnotationManager == null) return;
     
     // Clear existing markers
@@ -165,31 +290,31 @@ class _UniversityMapState extends State<UniversityMap> {
       final type = building['type'] as BuildingType?;
       switch (type) {
         case BuildingType.department:
-          color = Colors.blue.value;
+          color = const Color(0xFF1976D2).value;
           break;
         case BuildingType.amphitheatre:
-          color = Colors.purple.value;
+          color = const Color(0xFF7B1FA2).value;
           break;
         case BuildingType.library:
-          color = Colors.green.value;
+          color = const Color(0xFF388E3C).value;
           break;
         case BuildingType.admin:
-          color = Colors.orange.value;
+          color = const Color(0xFFF57C00).value;
           break;
         case BuildingType.bloc:
-          color = Colors.teal.value;
+          color = const Color(0xFF00796B).value;
           break;
         case BuildingType.research:
-          color = Colors.indigo.value;
+          color = const Color(0xFF303F9F).value;
           break;
         default:
-          color = Colors.red.value;
+          color = const Color(0xFFEF4444).value;
       }
       
       await _circleAnnotationManager!.create(
         mapbox.CircleAnnotationOptions(
           geometry: mapbox.Point(coordinates: mapbox.Position(lng, lat)),
-          circleRadius: 10.0,
+          circleRadius: 8.0,
           circleColor: color,
           circleStrokeColor: Colors.white.value,
           circleStrokeWidth: 2.0,
@@ -246,21 +371,36 @@ class _UniversityMapState extends State<UniversityMap> {
           icon: const Icon(Icons.menu),
           onPressed: widget.onMenuPressed,
         ),
-        title: const Text('Campus Map'),
-        backgroundColor: Colors.green.shade700,
-        foregroundColor: Colors.white,
+        title: Row(
+          children: [
+            const Icon(Icons.map, color: AppTheme.primary, size: 24),
+            const SizedBox(width: AppTheme.spacingSm),
+            const Text('Campus Map', style: AppTheme.headingMedium),
+          ],
+        ),
+        backgroundColor: AppTheme.bgSurface,
+        foregroundColor: AppTheme.textPrimary,
         elevation: 0,
+        surfaceTintColor: Colors.transparent,
       ),
       body: SafeArea(
         child: Column(
           children: [
             // Filter chips
             Container(
-              height: 50,
-              color: Colors.green.shade700,
+              height: 56,
+              decoration: BoxDecoration(
+                color: AppTheme.bgSurface,
+                border: Border(
+                  bottom: BorderSide(color: AppTheme.divider, width: 1),
+                ),
+              ),
               child: ListView(
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppTheme.spacingMd,
+                  vertical: AppTheme.spacingSm,
+                ),
                 children: [
                   _buildFilterChip(null, 'All'),
                   _buildFilterChip(BuildingType.department, 'Depts'),
@@ -288,13 +428,26 @@ class _UniversityMapState extends State<UniversityMap> {
             // Carousel
             if (_filteredBuildings.isNotEmpty && _buildingData.isNotEmpty)
               Container(
-                color: Colors.grey.shade900,
+                padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingSm),
+                decoration: BoxDecoration(
+                  color: AppTheme.bgPrimary,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, -4),
+                    ),
+                  ],
+                ),
                 child: CarouselSlider.builder(
                   itemCount: _filteredBuildings.length,
                   itemBuilder: (context, index, realIndex) {
                     if (index >= _buildingData.length) return const SizedBox();
                     return GestureDetector(
-                      onTap: () => _startNavigation(index),
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        _startNavigation(index);
+                      },
                       child: carouselCard(
                         _filteredBuildings[index],
                         _buildingData[index]['distance'] / 1000, // km
@@ -303,8 +456,8 @@ class _UniversityMapState extends State<UniversityMap> {
                     );
                   },
                   options: CarouselOptions(
-                    height: 100,
-                    viewportFraction: 0.85,
+                    height: 96, // Matches card height (80) + vertical margins (16)
+                    viewportFraction: 0.88,
                     initialPage: 0,
                     enableInfiniteScroll: false,
                     onPageChanged: _onCarouselPageChanged,
@@ -315,30 +468,45 @@ class _UniversityMapState extends State<UniversityMap> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _centerOnUser,
-        backgroundColor: Colors.green.shade700,
-        child: const Icon(Icons.my_location, color: Colors.white),
+        onPressed: () {
+          HapticFeedback.mediumImpact();
+          _centerOnUser();
+        },
+        backgroundColor: AppTheme.primary,
+        child: const Icon(Icons.my_location, color: AppTheme.textOnPrimary),
       ),
     );
   }
 
   Widget _buildFilterChip(BuildingType? type, String label) {
-    final isSelected = _selectedFilter == type;
+    final isSelected = _selectedFilter == type ||
+        (type == null && _selectedFilter == null);
     return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: FilterChip(
-        label: Text(label),
-        selected: isSelected,
-        onSelected: (_) => _applyFilter(type),
-        backgroundColor: Colors.green.shade600,
-        selectedColor: Colors.white,
-        labelStyle: TextStyle(
-          color: isSelected ? Colors.green.shade700 : Colors.white,
-          fontWeight: FontWeight.bold,
-          fontSize: 12,
+      padding: const EdgeInsets.only(right: AppTheme.spacingSm),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            _applyFilter(type);
+          },
+          borderRadius: AppTheme.borderRadiusFull,
+          child: AnimatedContainer(
+            duration: AppAnimations.fast,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppTheme.spacingMd,
+              vertical: AppTheme.spacingSm,
+            ),
+            decoration: AppTheme.chipDecoration(isSelected: isSelected),
+            child: Text(
+              label,
+              style: AppTheme.labelSmall.copyWith(
+                color: isSelected ? AppTheme.primary : AppTheme.textSecondary,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+              ),
+            ),
+          ),
         ),
-        checkmarkColor: Colors.green.shade700,
-        padding: const EdgeInsets.symmetric(horizontal: 4),
       ),
     );
   }
